@@ -7,13 +7,16 @@ from bokeh.palettes import viridis, all_palettes
 from histos import histos
 from cmsstyle import CMS_lumi
 from new_branches import to_define
-from samples import weights, sample_names, titles
+from samples_wf import weights, sample_names, titles
 from selections import preselection, preselection_mc, pass_id, fail_id
 import pickle
 from officialStyle import officialStyle
-from create_datacard import create_datacard_pass,create_datacard_fail
+from create_datacard import create_datacard_onlypass
 import random
+import time
+from array import array
 
+start_time = time.time()
 
 ROOT.EnableImplicitMT()
 ROOT.gROOT.SetBatch()   
@@ -44,6 +47,12 @@ def save_yields(label, temp_hists):
             print(kk.replace(k, '')[1:], '\t\t%.1f' %vv.Integral(), file=ff)
         print('total expected', '\t%.1f' %total_expected, file=ff)
 
+def save_weights(label, sample_names, weights):
+    with open('plots_ul/%s/normalisations.txt' %label, 'w') as ff:
+        for sname in sample_names: 
+            print(sname+'\t\t%.2f' %weights[sname], file=ff)
+
+    
 def save_selection(label, preselection):
     with open('plots_ul/%s/selection.py' %label, 'w') as ff:
         total_expected = 0.
@@ -66,12 +75,12 @@ def create_legend(temp_hists, sample_names, titles):
         leg.AddEntry(temp_hists[k]['%s_%s' %(k, kk)].GetValue(), titles[kk], 'F' if kk!='data' else 'EP')
     return leg
 
-def create_datacard_prep(hists,flag,name,label):
+def create_datacard_prep(hists,shape_hists,shapes_names,flag,name,label):
     fout = ROOT.TFile.Open('plots_ul/%s/datacards/datacard_%s_%s.root' %(label,flag, name), 'recreate')
     fout.cd()
     myhists = dict()
     for k, v in hists.items():
-        for isample in sample_names + ['fakes']:
+        for isample in sample_names :
             if isample in k:
                 hh = v.Clone()
                 if isample == 'data':
@@ -81,12 +90,17 @@ def create_datacard_prep(hists,flag,name,label):
                 hh.Write()
                 myhists[isample] = hh.Clone()
                 #print(myhists[isample],isample)
-
+    for k,v in shape_hists.items():
+        for sname in shapes_names:
+            if sname in k:
+                hh = v.Clone()
+                hh.SetName(sname)
+                hh.Write()
     #print(myhists['data'].Integral())
     if flag == 'pass':
-        create_datacard_pass(myhists,name, label)
-    else:
-        create_datacard_fail(myhists,name, label)
+        create_datacard_onlypass(myhists,name, label)
+    #    else:
+    #    create_datacard_fail(myhists,name, label)
     fout.Close()
 
                 
@@ -145,8 +159,9 @@ if __name__ == '__main__':
     
     tree_name = 'BTo3Mu'
     tree_dir_data = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar15' #data
-    tree_dir_psitau = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar25' #data
     tree_dir = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar15' #Bc and Hb
+    tree_dir_psitau = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar25' #psi2stau
+    tree_hbmu = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar16' #Bc and Hb
 
     '''    for isample_name in sample_names:
         print(isample_name)
@@ -154,7 +169,7 @@ if __name__ == '__main__':
         #        samples[isample_name] = ROOT.RDataFrame(tree_name, '%s/BcToXToJpsi_is_%s_enriched.root' %(tree_dir, isample_name))
     '''
     samples['jpsi_tau'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_tau_merged.root' %(tree_dir))
-    samples['jpsi_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_mu_merged.root' %(tree_dir))
+    samples['jpsi_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_mu_trigger_hammer.root' %(tree_dir))
     samples['chic0_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_chic0_mu_merged.root' %(tree_dir))
     samples['chic1_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_chic1_mu_merged.root' %(tree_dir))
     samples['chic2_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_chic2_mu_merged.root' %(tree_dir))
@@ -162,39 +177,103 @@ if __name__ == '__main__':
     samples['jpsi_hc'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_hc_merged.root' %(tree_dir))
     samples['psi2s_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_psi2s_mu_merged.root' %(tree_dir))
     samples['psi2s_tau'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_psi2s_tau_merged.root' %(tree_dir_psitau))
-    samples['data'] = ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged.root' %(tree_dir_data))
-    samples['onia'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu_ptmax_merged.root' %(tree_dir))
+    #samples['data'] = ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged.root' %(tree_dir_data))
+    #samples['onia'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu_ptmax_merged.root' %(tree_dir))
+    #samples['onia'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu3MuFilter_ptmax_merged.root' %(tree_hbmu))
+    samples['jpsi_x_mu'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu3MuFilter_trigger_bcclean.root' %(tree_hbmu))
+    samples['jpsi_x'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu_trigger_bcclean.root' %(tree_dir))
+    samples['data'] = ROOT.RDataFrame(tree_name,'%s/data_flagtriggersel.root' %(tree_dir_data))
+    
+
+        
+
 
     print("OK")
     # define total weights for the different samples and add new columns to RDFs
+
     #blind analysis-> random number between 0.5 and 2 (but always the same because it is fixed)
     random.seed(2)
     rand = random.randint(0, 10000)
-    blind = rand/10000 *1.5 +0.5
+    #blind = rand/10000 *1.5 +0.5
+    blind = 1.
+    rjpsi = 1.
+    #rjpsi = 0.25/0.066 #SM
+    #rjpsi = 0.71 #lhcb
     for k, v in samples.items():
-        print(k,v)
+        #print(k,v)
         samples[k] = samples[k].Define('br_weight', '%f' %weights[k])
         if k=='jpsi_tau':
-           samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight*%f' %blind)
-
+            # HERE
+            #samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight*290620./500805.')
+           samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight*%f*%f' %(blind,rjpsi))
+           
         elif k=='jpsi_mu':
-           samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight')
+            samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight*bglvar')
+            #samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight')
         else:
             samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight' if k!='data' else 'br_weight') # weightGen is suposed to be the lifetime reweigh, but it's broken
         for new_column, new_definition in to_define: 
             if samples[k].HasColumn(new_column):
                 continue
             samples[k] = samples[k].Define(new_column, new_definition)
-    print("OK2")
+
     # apply filters on newly defined variables
     for k, v in samples.items():
-        print(k,v)
-        filter = preselection_mc if k!='data' else preselection
+        filter = preselection_mc if (k!='data' and k!='jpsi_x') else preselection
         samples[k] = samples[k].Filter(filter)
+        if k == 'jpsi_x':
+            hbx_filter = '!(abs(k_genpdgId)==13)'
+            samples[k] = samples[k].Filter(hbx_filter)
 
+
+    #shape uncertainties
+    shapes = dict()
+    for sname in samples:
+        if (sname != 'jpsi_x_mu' and sname != 'jpsi_x' and sname != 'data' ):
+            shapes[sname + '_ctauUp'] = samples[sname]
+            if sname == 'jpsi_mu':
+                shapes[sname +'_ctauUp'] = shapes[sname + '_ctauUp'].Define('shape_weight', 'ctau_weight_up*br_weight*puWeight*bglvar')
+            else:
+                shapes[sname + '_ctauUp'] = shapes[sname + '_ctauUp'].Define('shape_weight', 'ctau_weight_up*br_weight*puWeight')
+            shapes[sname + '_ctauDown'] = samples[sname]
+            if sname == 'jpsi_mu':
+                shapes[sname + '_ctauDown'] = shapes[sname + '_ctauDown'].Define('shape_weight', 'ctau_weight_down*br_weight*puWeight*bglvar')
+            else:
+                shapes[sname + '_ctauDown'] = shapes[sname + '_ctauDown'].Define('shape_weight', 'ctau_weight_down*br_weight*puWeight')
+
+    hammer_branches = ['bglvar_e0up',
+                       'bglvar_e0down',
+                       'bglvar_e1up',
+                       'bglvar_e1down',
+                       'bglvar_e2up',
+                       'bglvar_e2down',
+                       'bglvar_e3up',
+                       'bglvar_e3down',
+                       'bglvar_e4up',
+                       'bglvar_e4down',
+                       'bglvar_e5up',
+                       'bglvar_e5down',
+                       'bglvar_e6up',
+                       'bglvar_e6down',
+                       'bglvar_e7up',
+                       'bglvar_e7down',
+                       'bglvar_e8up',
+                       'bglvar_e8down',
+                       'bglvar_e9up',
+                       'bglvar_e9down',
+                       'bglvar_e10up',
+                       'bglvar_e10down'
+    ]
+    for ham in hammer_branches:
+        if 'up' in ham:
+            new_name = ham.replace('up','Up')
+        elif 'down' in ham:
+            new_name = ham.replace('down','Down')
+        shapes['jpsi_mu_'+new_name] = samples['jpsi_mu']
+        shapes['jpsi_mu_'+new_name] = shapes['jpsi_mu_'+new_name].Define('shape_weight', 'ctau_weight_central*br_weight*puWeight*'+ham)
     # better for categorical data
     # colours = list(map(ROOT.TColor.GetColor, all_palettes['Category10'][len(samples)]))
-    colours = list(map(ROOT.TColor.GetColor, all_palettes['Spectral'][len(samples)]))
+    colours = list(map(ROOT.TColor.GetColor, all_palettes['Spectral'][len(samples)-1]))
 
     # print ('user defined variables')
     # print ('='*80)
@@ -214,14 +293,23 @@ if __name__ == '__main__':
         temp_hists     [k] = {}
         temp_hists_fake[k] = {}
         for kk, vv in samples.items():
-            #print("sample items",kk)
-            try:
-                temp_hists     [k]['%s_%s' %(k, kk)] = vv.Filter(pass_id).Histo1D(v[0], k, 'total_weight')
-                temp_hists_fake[k]['%s_%s' %(k, kk)] = vv.Filter(fail_id).Histo1D(v[0], k, 'total_weight')
-            except:
-                pass
+            #            try:
+            temp_hists     [k]['%s_%s' %(k, kk)] = vv.Filter(pass_id).Histo1D(v[0], k, 'total_weight')
+            temp_hists_fake[k]['%s_%s' %(k, kk)] = vv.Filter(fail_id).Histo1D(v[0], k, 'total_weight')
+            #except:
+            #    print("NO")
+            #    pass
     
     #     import pdb ; pdb.set_trace()
+
+    print('====> shape uncertainties histos')
+    unc_hists      = {} # pass muon ID category
+    for k, v in histos.items():    
+        unc_hists     [k] = {}
+        for kk, vv in shapes.items():
+            unc_hists     [k]['%s_%s' %(k, kk)] = vv.Filter(pass_id).Histo1D(v[0], k, 'shape_weight')
+
+
     
     print('====> now looping')
     # loop on the histos
@@ -240,7 +328,11 @@ if __name__ == '__main__':
             ihist = kv[1]
             ihist.GetXaxis().SetTitle(v[1])
             ihist.GetYaxis().SetTitle('events')
-    #         ihist.Scale(1./ihist.Integral())
+            #         ihist.Scale(1./ihist.Integral())
+            #            if(key == '%s_jpsi_x'%k):
+            #    ihist.SetLineColor(ROOT.kRed-4)
+            #    ihist.SetFillColor(ROOT.kRed-4)
+            #else:
             ihist.SetLineColor(colours[i] if key!='%s_data'%k else ROOT.kBlack)
             ihist.SetFillColor(colours[i] if key!='%s_data'%k else ROOT.kWhite)
             if key!='%s_data'%k:
@@ -251,22 +343,30 @@ if __name__ == '__main__':
         ths1      = ROOT.THStack('stack', '')
         ths1_fake = ROOT.THStack('stack_fake', '')
 
+
+
         for i, kv in enumerate(temp_hists[k].items()):
             key = kv[0]
             if key=='%s_data'%k: continue
             ihist = kv[1]
+            #            if key == '%s_jpsi_mu'%k:ihist.Scale(48717.9/ihist.Integral())
             ihist.SetMaximum(2.*max(maxima))
             # ihist.SetMinimum(0.)
             ihist.Draw('hist' + 'same'*(i>0))
+            #if key == '%s_fakes'%k:print(ihist.Integral())
             ths1.Add(ihist.GetValue())
 
+            
         # apply same aestethics to pass and fail
-        for kk in temp_hists[k].keys():
+        '''for kk in temp_hists[k].keys():
             temp_hists_fake[k][kk].GetXaxis().SetTitle(temp_hists[k][kk].GetXaxis().GetTitle())
             temp_hists_fake[k][kk].GetYaxis().SetTitle(temp_hists[k][kk].GetYaxis().GetTitle())
             temp_hists_fake[k][kk].SetLineColor(temp_hists[k][kk].GetLineColor())
             temp_hists_fake[k][kk].SetFillColor(temp_hists[k][kk].GetFillColor())
-         
+        #print(k)
+        '''
+        '''
+        print(temp_hists_fake[k]['%s_data' %k].Integral())
         temp_hists[k]['%s_fakes' %k] = temp_hists_fake[k]['%s_data' %k].Clone()
         fakes = temp_hists[k]['%s_fakes' %k]
         for i, kv in enumerate(temp_hists_fake[k].items()):
@@ -275,12 +375,16 @@ if __name__ == '__main__':
                 continue
             else:
                 fakes.Add(kv[1].GetPtr(), -1.)
+                for j in range(fakes.GetNbinsX()):
+                    if(fakes.GetBinContent(j) < 0):
+                        fakes.SetBinContent(j,0.0001)  
         fakes.SetFillColor(ROOT.kRed)
         fakes.SetFillStyle(1001)
         fakes.SetLineColor(ROOT.kRed)
         fakes_forfail = fakes.Clone()
         fakes.Scale(weights['fakes'])
         ths1.Add(fakes)
+        '''
         ths1.Draw('hist')
         try:
             ths1.GetXaxis().SetTitle(v[1])
@@ -297,7 +401,7 @@ if __name__ == '__main__':
         stats.SetFillStyle(3344)
         stats.SetMarkerSize(0)
         stats.Draw('E2 SAME')
-        leg.AddEntry(fakes, 'fakes', 'F')    
+        #leg.AddEntry(fakes, 'fakes', 'F')    
         leg.AddEntry(stats, 'stat. unc.', 'F')
         leg.Draw('same')
     
@@ -307,10 +411,14 @@ if __name__ == '__main__':
 
         main_pad.cd()
         rjpsi_value = ROOT.TPaveText(0.7, 0.65, 0.88, 0.72, 'nbNDC')
-        rjpsi_value.AddText('R(J/#Psi) = %.2f' %weights['jpsi_tau'])
-    #     rjpsi_value.SetTextFont(62)
+        rjpsi_value.AddText('R(J/#Psi) = %.2f' %rjpsi)
         rjpsi_value.SetFillColor(0)
-        rjpsi_value.Draw('EP')
+        rjpsi_value.Draw('EP')        
+        #HERE comment rjpsi value
+        #rjpsi_value = ROOT.TPaveText(0.7, 0.65, 0.88, 0.72, 'nbNDC')
+        #rjpsi_value.AddText('R(J/#Psi) = %.2f' %(weights['jpsi_tau']/weights['jpsi_mu']))
+        #rjpsi_value.SetFillColor(0)
+        #rjpsi_value.Draw('EP')
 
         ratio_pad.cd()
         ratio = temp_hists[k]['%s_data'%k].Clone()
@@ -337,7 +445,7 @@ if __name__ == '__main__':
             hh.Divide(stats)
             norm_stack.Add(hh)
         norm_stack.Draw('hist same')
-
+        
 
         line = ROOT.TLine(ratio.GetXaxis().GetXmin(), 1., ratio.GetXaxis().GetXmax(), 1.)
         line.SetLineColor(ROOT.kBlack)
@@ -356,18 +464,19 @@ if __name__ == '__main__':
         ths1.SetMaximum(20*max(sum(maxima), data_max))
         ths1.SetMinimum(10)
         main_pad.SetLogy(True)
+
+        
         c1.Modified()
+
         c1.Update()
         c1.SaveAs('plots_ul/%s/pdf/log/%s.pdf' %(label, k))
         c1.SaveAs('plots_ul/%s/png/log/%s.png' %(label, k))
         
-        #print("pass region")
-        #print(temp_hists[k])
         if k in datacards:
-            create_datacard_prep(temp_hists[k],'pass',k,label)
+            create_datacard_prep(temp_hists[k],unc_hists[k],shapes,'pass',k,label)
 
         ##########################################################################################
-        
+        '''
         c1.cd()
         main_pad.cd()
         main_pad.SetLogy(False)
@@ -384,9 +493,9 @@ if __name__ == '__main__':
             # ihist.Draw('hist' + 'same'*(i>0))
             ths1_fake.Add(ihist.GetValue())
         #        print(type(temp_hists_fake[k]['%s_data' %k]))
-        temp_hists_fake[k]['%s_fakes' %k] = fakes_forfail
+        #temp_hists_fake[k]['%s_fakes' %k] = fakes_forfail
         #print("fakes!",temp_hists_fake[k]['%s_fakes' %k])
-        ths1_fake.Add(fakes_forfail)
+        #ths1_fake.Add(fakes_forfail)
         ths1_fake.Draw('hist')
         ths1_fake.SetMaximum(1.6*max_fake)
 
@@ -424,13 +533,17 @@ if __name__ == '__main__':
         c1.SaveAs('plots_ul/%s/fail_region/pdf/log/%s.pdf' %(label, k))
         c1.SaveAs('plots_ul/%s/fail_region/png/log/%s.png' %(label, k))
 
-        if k in datacards:
-            create_datacard_prep(temp_hists_fake[k],'fail',k,label)
-        
+        #        if k in datacards:
+        #    create_datacard_prep(temp_hists_fake[k],'fail',k,label)
+        '''
+
+
     save_yields(label, temp_hists)
     save_selection(label, preselection)
+    save_weights(label, sample_names, weights)
 
 
+print("--- %s seconds ---" % (time.time() - start_time))
 # save reduced trees to produce datacards
 # columns = ROOT.std.vector('string')()
 # for ic in ['Q_sq', 'm_miss_sq', 'E_mu_star', 'E_mu_canc', 'Bmass']:

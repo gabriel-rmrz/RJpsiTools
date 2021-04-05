@@ -7,13 +7,11 @@ from bokeh.palettes import viridis, all_palettes
 from histos import histos
 from cmsstyle import CMS_lumi
 from new_branches import to_define
-from samples import weights, sample_names, titles
+from samples import weights, sample_names, titles, rjpsi
 from selections import preselection, preselection_mc, pass_id, fail_id
 import pickle
 from officialStyle import officialStyle
 from create_datacard import create_datacard_pass,create_datacard_fail
-import random
-
 
 ROOT.EnableImplicitMT()
 ROOT.gROOT.SetBatch()   
@@ -66,8 +64,8 @@ def create_legend(temp_hists, sample_names, titles):
         leg.AddEntry(temp_hists[k]['%s_%s' %(k, kk)].GetValue(), titles[kk], 'F' if kk!='data' else 'EP')
     return leg
 
-def create_datacard_prep(hists,flag,name,label):
-    fout = ROOT.TFile.Open('plots_ul/%s/datacards/datacard_%s_%s.root' %(label,flag, name), 'recreate')
+def create_datacard(hists, name, label):
+    fout = ROOT.TFile.Open('plots_ul/%s/datacards/datacard_%s.root' %(label, name), 'recreate')
     fout.cd()
     myhists = dict()
     for k, v in hists.items():
@@ -80,16 +78,65 @@ def create_datacard_prep(hists,flag,name,label):
                     hh.SetName(isample)
                 hh.Write()
                 myhists[isample] = hh.Clone()
-                #print(myhists[isample],isample)
 
-    #print(myhists['data'].Integral())
-    if flag == 'pass':
-        create_datacard_pass(myhists,name, label)
-    else:
-        create_datacard_fail(myhists,name, label)
+    toprint = '''
+imax * number of bins
+jmax * number of processes minus 1
+kmax * number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+shapes * * {dc} $PROCESS $PROCESS_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+bin          ch1    
+observation  {obs:d} 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+bin                                   ch1            ch1           ch1              ch1              ch1              ch1           ch1            ch1             ch1           ch1               ch1     
+process                               jpsi_tau       jpsi_mu       chic0_mu         chic1_mu         chic2_mu         jpsi_hc       psi2s_mu       psi2s_tau       hc_mu         jpsi_x_mu         fakes  
+process                               0              1             2                3                4                5             6              7               8             9                 10       
+rate                                  {jpsi_tau:.2f} {jpsi_mu:.2f} {chic0_mu:.2f}   {chic1_mu:.2f}   {chic2_mu:.2f}   {jpsi_hc:.2f} {psi2s_mu:.2f} {psi2s_tau:.2f} {hc_mu:.2f}   {jpsi_x_mu:.2f}   {fakes:.2f}
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+br_tau_over_mu          lnN           1.15           -             -                -                -                -             -              -               -             -                  -       
+br_pi_over_mu           lnN           -              1.15          -                -                -                -             -              -               -             -                  -       
+br_chic0_over_mu        lnN           -              -             1.15             -                -                -             -              -               -             -                  -       
+br_chic1_over_mu        lnN           -              -             -                1.15             -                -             -              -               -             -                  -       
+br_chic2_over_mu        lnN           -              -             -                -                1.15             -             -              -               -             -                  -       
+br_hc_over_mu           lnN           -              -             -                -                -                1.15          -              -               -             -                  -       
+br_psi2s_over_mu        lnN           -              -             -                -                -                -             1.15           -               -             -                  -       
+br_psi2stau_over_mu     lnN           -              -             -                -                -                -             -              1.15            -             -                  -       
+br_jpsi_hc_over_mu      lnN           -              -             -                -                -                -             -              -               1.15          -                  -       
+jpsi_plus_x             lnN           -              -             -                -                -                -             -              -               -             1.3                -       
+fake_rate               lnN           -              -             -                -                -                -             -              -               -             -                  1.5     
+muon_id                 lnN           1.05           1.05          1.05             1.05             1.05             1.05          1.05           1.05            1.05          1.05               -       
+trigger                 lnN           1.05           1.05          1.05             1.05             1.05             1.05          1.05           1.05            1.05          1.05               -       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+bc_norm       rateParam ch1 jpsi_mu 1  
+bc_norm       rateParam ch1 jpsi_tau 1  
+bc_norm       rateParam ch1 chic0_mu 1  
+bc_norm       rateParam ch1 chic1_mu 1  
+bc_norm       rateParam ch1 chic2_mu 1  
+bc_norm       rateParam ch1 psi2s_mu 1  
+bc_norm       rateParam ch1 psi2s_tau 1  
+bc_norm       rateParam ch1 hc_mu 1  
+bc_norm       rateParam ch1 jpsi_hc 1 
+ch1 autoMCStats 0 0 1
+'''.format(
+    dc        = 'datacard_%s.root' %name,
+    obs       = int(myhists['data'].Integral()),
+    jpsi_tau  = myhists['jpsi_tau' ].Integral(),
+    jpsi_mu   = myhists['jpsi_mu'  ].Integral(),
+    chic0_mu  = myhists['chic0_mu' ].Integral(),
+    chic1_mu  = myhists['chic1_mu' ].Integral(),
+    chic2_mu  = myhists['chic2_mu' ].Integral(),
+    jpsi_hc   = myhists['jpsi_hc'  ].Integral(),
+    psi2s_mu  = myhists['psi2s_mu' ].Integral(),
+    psi2s_tau = myhists['psi2s_tau'].Integral(),
+    hc_mu     = myhists['hc_mu'    ].Integral(),
+    jpsi_x_mu = myhists['jpsi_x_mu'].Integral(),
+    fakes     = myhists['fakes'    ].Integral(),
+)
+    with open('plots_ul/%s/datacards/datacard_%s.txt' %(label, name), 'w') as ff:
+        print(toprint, file=ff)
     fout.Close()
-
-                
+              
 # Canvas and Pad gymnastics
 c1 = ROOT.TCanvas('c1', '', 700, 700)
 c1.Draw()
@@ -144,17 +191,14 @@ if __name__ == '__main__':
     samples = dict()
     
     tree_name = 'BTo3Mu'
-    tree_dir_data = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar15' #data
-    tree_dir_psitau = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar25' #data
-    tree_dir = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar15' #Bc and Hb
 
-    '''    for isample_name in sample_names:
-        print(isample_name)
-        samples[isample_name] = ROOT.RDataFrame(tree_name, '%s/BcToXToJpsi_is_%s_merged.root' %(tree_dir, isample_name))
-        #        samples[isample_name] = ROOT.RDataFrame(tree_name, '%s/BcToXToJpsi_is_%s_enriched.root' %(tree_dir, isample_name))
-    '''
+    tree_dir_data = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar15' #data
+    tree_dir = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar15' #Bc and Hb
+    tree_dir_psitau = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar25' #psi2stau
+    tree_hbmu = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar16' #Bc and Hb
+
     samples['jpsi_tau'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_tau_merged.root' %(tree_dir))
-    samples['jpsi_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_mu_merged.root' %(tree_dir))
+    samples['jpsi_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_mu_trigger_hammer.root' %(tree_dir))
     samples['chic0_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_chic0_mu_merged.root' %(tree_dir))
     samples['chic1_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_chic1_mu_merged.root' %(tree_dir))
     samples['chic2_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_chic2_mu_merged.root' %(tree_dir))
@@ -162,33 +206,38 @@ if __name__ == '__main__':
     samples['jpsi_hc'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_jpsi_hc_merged.root' %(tree_dir))
     samples['psi2s_mu'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_psi2s_mu_merged.root' %(tree_dir))
     samples['psi2s_tau'] = ROOT.RDataFrame(tree_name,'%s/BcToJPsiMuMu_is_psi2s_tau_merged.root' %(tree_dir_psitau))
-    samples['data'] = ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged.root' %(tree_dir_data))
-    samples['onia'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu_ptmax_merged.root' %(tree_dir))
+    #samples['data'] = ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged.root' %(tree_dir_data))
+    samples['data'] = ROOT.RDataFrame(tree_name,'%s/data_flagtriggersel.root' %(tree_dir_data))
+    #samples['onia'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu_ptmax_merged.root' %(tree_dir))
+    #samples['onia'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu3MuFilter_ptmax_merged.root' %(tree_hbmu))
+    samples['jpsi_x_mu'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu3MuFilter_trigger_bcclean.root' %(tree_hbmu))
+    #samples['fakes'] = ROOT.RDataFrame(tree_name,'%s/HbToJPsiMuMu_trigger_bcclean.root' %(tree_dir))
 
-    print("OK")
+
+
     # define total weights for the different samples and add new columns to RDFs
-    #blind analysis-> random number between 0.5 and 2 (but always the same because it is fixed)
-    random.seed(2)
-    rand = random.randint(0, 10000)
-    blind = rand/10000 *1.5 +0.5
     for k, v in samples.items():
-        print(k,v)
         samples[k] = samples[k].Define('br_weight', '%f' %weights[k])
-        if k=='jpsi_tau':
-           samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight*%f' %blind)
-
-        elif k=='jpsi_mu':
-           samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight')
-        else:
-            samples[k] = samples[k].Define('total_weight', 'ctau_weight_central*br_weight*puWeight' if k!='data' else 'br_weight') # weightGen is suposed to be the lifetime reweigh, but it's broken
+        if   k=='jpsi_tau' : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='jpsi_mu'  : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight * hammer_clean')
+#         elif k=='jpsi_mu'  : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='psi2s_mu' : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='psi2s_tau': samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='chic0_mu' : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='chic1_mu' : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='chic2_mu' : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='hc_mu'    : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='jpsi_hc'  : samples[k] = samples[k].Define('total_weight', 'br_weight * ctau_weight_central * puWeight')
+        elif k=='jpsi_x_mu': samples[k] = samples[k].Define('total_weight', 'br_weight * puWeight')
+        else               : samples[k] = samples[k].Define('total_weight', '1.') # data
+        
         for new_column, new_definition in to_define: 
             if samples[k].HasColumn(new_column):
                 continue
             samples[k] = samples[k].Define(new_column, new_definition)
-    print("OK2")
+
     # apply filters on newly defined variables
     for k, v in samples.items():
-        print(k,v)
         filter = preselection_mc if k!='data' else preselection
         samples[k] = samples[k].Filter(filter)
 
@@ -307,7 +356,7 @@ if __name__ == '__main__':
 
         main_pad.cd()
         rjpsi_value = ROOT.TPaveText(0.7, 0.65, 0.88, 0.72, 'nbNDC')
-        rjpsi_value.AddText('R(J/#Psi) = %.2f' %weights['jpsi_tau'])
+        rjpsi_value.AddText('R(J/#Psi) = %.2f' %rjpsi)
     #     rjpsi_value.SetTextFont(62)
         rjpsi_value.SetFillColor(0)
         rjpsi_value.Draw('EP')
@@ -364,7 +413,9 @@ if __name__ == '__main__':
         #print("pass region")
         #print(temp_hists[k])
         if k in datacards:
-            create_datacard_prep(temp_hists[k],'pass',k,label)
+            create_datacard(temp_hists[k], k, label)
+
+#             create_datacard_prep(temp_hists[k],'pass',k,label)
 
         ##########################################################################################
         
@@ -424,8 +475,8 @@ if __name__ == '__main__':
         c1.SaveAs('plots_ul/%s/fail_region/pdf/log/%s.pdf' %(label, k))
         c1.SaveAs('plots_ul/%s/fail_region/png/log/%s.png' %(label, k))
 
-        if k in datacards:
-            create_datacard_prep(temp_hists_fake[k],'fail',k,label)
+#         if k in datacards:
+#             create_datacard_prep(temp_hists_fake[k],'fail',k,label)
         
     save_yields(label, temp_hists)
     save_selection(label, preselection)
