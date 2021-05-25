@@ -14,10 +14,10 @@ ROOT.gStyle.SetOptStat(0)
 
 #officialStyle(ROOT.gStyle, ROOT.TGaxis)
 
-tree_name = 'BTommm'
-tree_dir = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2020Dec09/merged'
+tree_name = 'BTo3Mu'
+tree_dir = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_2021Mar15/'
 data= ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged.root' %(tree_dir))
-
+nbins = 20
 #define jpsiK_mass
 for new_column, new_definition in to_define:
     if data.HasColumn(new_column):
@@ -26,8 +26,8 @@ for new_column, new_definition in to_define:
 
 #apply preselection
 data = data.Filter(preselection)
-his_model_pass = (ROOT.RDF.TH1DModel('jpsiK_mass_pass'                , '', 25,      5.,     5.45), 'J/#psiK mass (GeV)'                                               , 0)
-his_model_total = (ROOT.RDF.TH1DModel('jpsiK_mass_total'                , '', 25,      5.,     5.45), 'J/#psiK mass (GeV)'                                               , 0)
+his_model_pass = (ROOT.RDF.TH1DModel('jpsiK_mass_pass'                , '', nbins,      5.,     5.45), 'J/#psiK mass (GeV)'                                               , 0)
+his_model_total = (ROOT.RDF.TH1DModel('jpsiK_mass_total'                , '', nbins,      5.,     5.45), 'J/#psiK mass (GeV)'                                               , 0)
 models = [his_model_pass,his_model_total]
 
 his_pass = data.Filter(pass_id).Histo1D(his_model_pass[0],"jpsiK_mass")
@@ -37,7 +37,20 @@ c1 = ROOT.TCanvas("c1","",700, 700)
 c1.Draw()
 c1.cd()
 integrals = []
-for histo,param in zip([his_pass,his_total],[[5.28,0.05],[5.27,0.05]]):
+funcs = []
+
+''' without selection on trigger!!
+mean_pass = 5.28
+sigma_pass = 0.05
+mean_total = 5.27
+sigma_total = 0.05
+'''
+mean_pass = 5.28
+sigma_pass = 0.05
+mean_total = 5.27
+sigma_total = 0.05
+
+for histo,param in zip([his_pass,his_total],[[mean_pass,sigma_pass],[mean_total,sigma_total]]):
 
     func= ROOT.TF1("func","gaus(0) +pol2(3)")
     func.SetParameter(1,param[0])
@@ -78,5 +91,24 @@ for histo,param in zip([his_pass,his_total],[[5.28,0.05],[5.27,0.05]]):
     c1.Update()
     c1.SaveAs('gaus_fit_'+histo.GetPtr().GetName()+'.png')
     integrals.append(histo.Integral())
+    funcs.append(fit_gaus)
+    
 
-print("Fake Rate = ", integrals[0]/integrals[1])
+
+c2= ROOT.TCanvas()
+funcs[0].SetMaximum(2.*max(funcs[0].GetMaximum(),funcs[1].GetMaximum()))
+funcs[0].SetMinimum(0.)
+funcs[0].Draw("l")
+funcs[1].Draw("lsame")
+c2.SaveAs("comp.png")
+fr = funcs[0].Integral(0,10)/funcs[1].Integral(0,10)
+print("Fake Rate = ", funcs[0].Integral(0,10)/funcs[1].Integral(0,10))
+f_out=open("fake_rate.txt","w+")
+f_out.write("fr = "+str(fr))
+f_out.write("\n")
+f_out.write("\n")
+f_out.write("preselection "+ preselection)
+f_out.write("\n")
+f_out.write("\n")
+f_out.write("passId "+ pass_id)
+f_out.close()
