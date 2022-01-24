@@ -1,3 +1,7 @@
+'''
+Difference from v6:
+- addition of division High mass and low mass
+'''
 #from nanoAOD root files, to flat ntuples
 from mybatch import *
 from coffea.analysis_objects import JaggedCandidateArray
@@ -18,6 +22,7 @@ from uproot_methods import TLorentzVector
 from uproot_methods import TVector3
 from scipy.constants import c as speed_of_light
 import uproot
+import math
 
 #hammer
 from bgl_variations import variations
@@ -28,12 +33,12 @@ from hammer import hepmc, pdg
 maxEvents = -1
 checkDoubles = True
 
-nMaxFiles = 1
-skipFiles = 0
+nMaxFiles = REPLACE_MAX_FILES
+skipFiles = REPLACE_SKIP_FILES
 
 #Compute hammer
-flag_hammer_mu = False
-flag_hammer_tau = False
+flag_hammer_mu  = True
+flag_hammer_tau = True
 
 #Add also pu weight
 flag_pu_weight = False
@@ -167,18 +172,70 @@ def jpsi_branches(pf):
     return pf
     
 def decaytime(pf):
+    beamspot_pos = TVector3Array(pf.beamspot_x, pf.beamspot_y, pf.beamspot_z)
     PV_pos = TVector3Array(pf.pv_x,pf.pv_y,pf.pv_z)
     jpsiVertex_pos = TVector3Array(pf.jpsivtx_vtx_x,pf.jpsivtx_vtx_y,pf.jpsivtx_vtx_z)
-    dist1 = (PV_pos - jpsiVertex_pos).mag
+    bcVertex_pos = TVector3Array(pf.bvtx_vtx_x,pf.bvtx_vtx_y,pf.bvtx_vtx_z)
+
+    dist_pv_jpsi = (PV_pos - jpsiVertex_pos).mag
+    dist_pv_bc = (PV_pos - bcVertex_pos).mag
+    dist_beamspot_jpsi = (beamspot_pos - jpsiVertex_pos).mag
+    dist_beamspot_bc = (beamspot_pos - bcVertex_pos).mag
 
     if(len(PV_pos)): 
-        decay_time1 = dist1 * 6.276 / (pf.Bpt_reco * 2.998e+10)
-        pf['decay_time'] = decay_time1
+        decay_time_pv_jpsi = dist_pv_jpsi * 6.276 / (pf.Bpt_reco * 2.998e+10)
+        pf['decay_time_pv_jpsi'] = decay_time_pv_jpsi
+        decay_time_pv_bc = dist_pv_bc * 6.276 / (pf.Bpt_reco * 2.998e+10)
+        pf['decay_time_pv_bc'] = decay_time_pv_bc
+        decay_time_beamspot_jpsi = dist_beamspot_jpsi * 6.276 / (pf.Bpt_reco * 2.998e+10)
+        pf['decay_time_beamspot_jpsi'] = decay_time_beamspot_jpsi
+        decay_time_beamspot_bc = dist_beamspot_bc * 6.276 / (pf.Bpt_reco * 2.998e+10)
+        pf['decay_time_beamspot_bc'] = decay_time_beamspot_bc
 
     # when there are 0 events, just to save the branch (empty)
     else:
-        pf['decay_time'] = pf.pv_x #it's NaN anyway
+        pf['decay_time_pv_jpsi'] = pf.pv_x #it's NaN anyway
+        pf['decay_time_pv_bc'] = pf.pv_x #it's NaN anyway
+        pf['decay_time_beamspot_jpsi'] = pf.pv_x #it's NaN anyway
+        pf['decay_time_beamspot_bc'] = pf.pv_x #it's NaN anyway
     return pf
+
+def bp4_lhcb(pf):
+    PV_pos = TVector3Array(pf.pv_x,pf.pv_y,pf.pv_z)
+    SV_pos = TVector3Array(pf.jpsivtx_vtx_x,pf.jpsivtx_vtx_y,pf.jpsivtx_vtx_z)
+
+    phi_pv_sv = (PV_pos - SV_pos).phi
+    theta_pv_sv = (PV_pos - SV_pos).theta
+    eta_pv_sv = -np.log( np.tan (abs(theta_pv_sv)/2) ) * np.sign(theta_pv_sv)
+    real_mass = [6.276 for i in phi_pv_sv]
+    Bpt = [item for item in pf.Bpt]
+
+    mu1_p4 = TLorentzVectorArray.from_ptetaphim(pf.mu1pt,pf.mu1eta,pf.mu1phi,pf.mu1mass)
+    mu2_p4 = TLorentzVectorArray.from_ptetaphim(pf.mu2pt,pf.mu2eta,pf.mu2phi,pf.mu2mass)
+    jpsi_p4= mu1_p4 + mu2_p4 
+    mu_p4 = TLorentzVectorArray.from_ptetaphim(pf.kpt,pf.keta,pf.kphi,pf.kmass)
+    b_p4 = TLorentzVectorArray.from_ptetaphim(Bpt, eta_pv_sv,phi_pv_sv, real_mass)
+
+    if(len(PV_pos)): 
+        
+        pf['Bpt_reco_b'] = b_p4.pt
+        pf['Q_sq_b'] = (b_p4 - jpsi_p4)*(b_p4 - jpsi_p4)
+        pf['pt_miss_b'] = (b_p4 - jpsi_p4 - mu_p4).pt
+        pf['pt_var_b'] = jpsi_p4.pt - mu_p4.pt
+        mu_beta_lab = TVector3Array(b_p4.x/b_p4.t,b_p4.y/b_p4.t,b_p4.z/b_p4.t)
+        mu_p4.boost(-mu_beta_lab)
+        pf['E_mu_star_b'] = mu_p4.energy
+
+    # when there are 0 events, just to save the branch (empty)
+    else:
+        pf['Bpt_reco_b'] = pf.pv_x #it's NaN anyway
+        pf['Q_sq_b'] = pf.pv_x #it's NaN anyway
+        pf['pt_miss_b'] = pf.pv_x #it's NaN anyway
+        pf['pt_var_b'] = pf.pv_x #it's NaN anyway
+        pf['E_mu_star_b'] = pf.pv_x #it's NaN anyway
+
+    return pf
+
 
 #for the rho corrected iso branch
 def getAreaEff( eta, drcone ):
@@ -244,9 +301,7 @@ def rho_corr_iso(df):
     return df
 
 # Compute the form factor weights for the mu sample
-def hammer_weights_mu(df):
-    ham = Hammer()
-    fbBuffer = IOBuffer
+def hammer_weights_mu(df,ham):
     ham.include_decay("BcJpsiMuNu")
     ff_input_scheme = dict()
     ff_input_scheme["BcJpsi"] = "Kiselev"
@@ -270,9 +325,9 @@ def hammer_weights_mu(df):
         weights[k] = []
     for i in range(len(df)): #loop on the events
         ham.init_event()
-        thebc_p4   = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.mu1_grandmother_pt[i],df.mu1_grandmother_eta[i] , df.mu1_grandmother_phi[i], 6.274)
-        themu_p4   = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.k_gen_pt[i] , df.k_gen_eta[i],df.k_gen_phi[i] , 0.1056583755)
-        thejpsi_p4 = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.mu1_mother_pt[i] , df.mu1_mother_eta[i],df.mu1_mother_phi[i] , 3.0969)
+        thebc_p4   = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.bc_gen_pt[i],df.bc_gen_eta[i] , df.bc_gen_phi[i], df.bc_gen_mass[i])
+        themu_p4   = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.mu3_gen_pt[i] , df.mu3_gen_eta[i],df.mu3_gen_phi[i] , df.mu3_gen_mass[i])
+        thejpsi_p4 = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.jpsi_gen_pt[i] , df.jpsi_gen_eta[i],df.jpsi_gen_phi[i] , df.jpsi_gen_mass[i])
         thenu_p4   = thebc_p4 - themu_p4 - thejpsi_p4
                         
         thebc   = Particle(FourMomentum(thebc_p4.e()  , thebc_p4.px()  , thebc_p4.py()  , thebc_p4.pz()  ), 541)
@@ -293,17 +348,13 @@ def hammer_weights_mu(df):
         for k in ff_schemes.keys():
             weights[k].append(ham.get_weight(k))
     for k in ff_schemes.keys():
-        print("k",k)
-        print("hammer_"+k)
         #save the nan as 1
         weights_clean = [ham if (not np.isnan(ham)) else 1. for ham in weights[k]]
         df["hammer_"+k] = weights_clean
     return df
 
 # Compute the form factor weights for the tau sample
-def hammer_weights_tau(df):
-    ham = Hammer()
-    fbBuffer = IOBuffer
+def hammer_weights_tau(df,ham):
     ham.include_decay(["BcJpsiTauNu"])
     ff_input_scheme = dict()
     ff_input_scheme["BcJpsi"] = "Kiselev"
@@ -327,11 +378,13 @@ def hammer_weights_tau(df):
         weights[k] = []
     for i in range(len(df)): #loop on the events
         ham.init_event()
-        thebc_p4   = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.mu1_grandmother_pt[i],df.mu1_grandmother_eta[i] , df.mu1_grandmother_phi[i], 6.274)
-        thetau_p4   = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.k_mother_pt[i] , df.k_mother_eta[i],df.k_mother_phi[i] , 1.77686)
-        thejpsi_p4 = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.mu1_mother_pt[i] , df.mu1_mother_eta[i],df.mu1_mother_phi[i] , 3.0969)
+
+        thebc_p4   = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.bc_gen_pt[i],df.bc_gen_eta[i] , df.bc_gen_phi[i],  df.bc_gen_mass[i])
+        thetau_p4 = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.tau_gen_pt[i] , df.tau_gen_eta[i],df.tau_gen_phi[i] , df.tau_gen_mass[i])
+        thejpsi_p4 = ROOT.Math.LorentzVector('ROOT::Math::PtEtaPhiM4D<double>')(df.jpsi_gen_pt[i] , df.jpsi_gen_eta[i],df.jpsi_gen_phi[i] , df.jpsi_gen_mass[i])
+
         thenutau_p4   = thebc_p4 - thetau_p4 - thejpsi_p4
-                        
+
         thebc   = Particle(FourMomentum(thebc_p4.e()  , thebc_p4.px()  , thebc_p4.py()  , thebc_p4.pz()  ), 541)
         thetau   = Particle(FourMomentum(thetau_p4.e()  , thetau_p4.px()  , thetau_p4.py()  , thetau_p4.pz()  ), -15          )
         thejpsi = Particle(FourMomentum(thejpsi_p4.e(), thejpsi_p4.px(), thejpsi_p4.py(), thejpsi_p4.pz()), 443          )
@@ -347,23 +400,90 @@ def hammer_weights_tau(df):
         pid = ham.add_process(Bc2JpsiLNu)
         pids.append(pid)
         ham.process_event()
+        
         for k in ff_schemes.keys():
             weights[k].append(ham.get_weight(k))
+
     for k in ff_schemes.keys():
-        print("k",k)
-        print("hammer_"+k)
         #save the nan as 1
         weights_clean = [ham if (not np.isnan(ham)) else 1. for ham in weights[k]]
         df["hammer_"+k] = weights_clean
     return df
+    
+# To DO : optimize this!
+def HighMassLowMassDivision(df):
+    hmlm = nf['HighMassLowMassFlags']
+    hmlm['index'] = [[i for subitem in item] for i,item in enumerate(hmlm['mu1_idx'])]
+    ancestors_flag = []
+    for ind2 in range(len(df['index'])): #index of dataframe
+        for ind1 in range(len(hmlm['index'])): #index of hmmlm
+            if hmlm['index'][ind1][0][0] == df['index'][ind2][0]: # if we are checking the same event
+                flag = 0
+                for jnd1 in range(len(hmlm['index'][ind1])): #loop over the different possibilities in hmlm for that event
+                    # when the third muon from the candidate is not a real muon (not really a problem, in the analysis I don't use these events)
+                    if (abs(df['k_genpdgId'][ind2]) != 13):
+                        flag = 1
+                        ancestors_flag.append(-1) 
+                        break 
+                        
+                    # One of the muons of the jpsi is not a real muon (I still compute the value from one of the cases)
+                    elif ( abs(df['mu1_genpdgId'][ind2]) != 13 or abs(df['mu2_genpdgId'][ind2]) != 13):
+                        flag = 1
+                        ancestors_flag.append(int(hmlm['jpsi_ancestor_idx'][ind1][jnd1] == hmlm['mu3_ancestor_idx'][ind1][jnd1]))
+                        break 
 
+                    # the jpsi has a perfect match
+                    elif ( (hmlm['mu1_idx'][ind1][jnd1] == df['mu1_genPartIdx'][ind2] or hmlm['mu1_idx'][ind1][jnd1] == df['mu2_genPartIdx'][ind2]) and (hmlm['mu2_idx'][ind1][jnd1] == df['mu1_genPartIdx'][ind2] or hmlm['mu2_idx'][ind1][jnd1] == df['mu2_genPartIdx'][ind2]) ):
+                        
+                        #perfect match also for the third muon
+                        if hmlm['mu3_idx'][ind1][jnd1] == df['k_genPartIdx'][ind2]:
+                            flag = 1
+                            ancestors_flag.append(int(hmlm['jpsi_ancestor_idx'][ind1][jnd1] == hmlm['mu3_ancestor_idx'][ind1][jnd1]))
+                            break 
+                     
+                        # third muon is not a perfect match but it's the last choice, so I take it
+                        elif hmlm['mu3_idx'][ind1][jnd1] != df['k_genPartIdx'][ind2] and jnd1 == len(hmlm['index'][ind1])-1:
+                            flag = 1
+                            ancestors_flag.append(int(hmlm['jpsi_ancestor_idx'][ind1][jnd1] == hmlm['mu3_ancestor_idx'][ind1][jnd1]))
+                            print("diff mu3 but same jpsi",ind2,ind1,jnd1,hmlm['mu1_idx'][ind1][jnd1],df['mu1_genPartIdx'][ind2],df['mu1_genpdgId'][ind2],hmlm['mu2_idx'][ind1][jnd1],df['mu2_genPartIdx'][ind2],df['mu2_genpdgId'][ind2],hmlm['mu3_idx'][ind1][jnd1],df['k_genPartIdx'][ind2],df['k_genpdgId'][ind2])
+                            break 
 
+                    # the jpsi has not a perfect match
+                    elif((hmlm['mu1_idx'][ind1][jnd1] == df['mu1_genPartIdx'][ind2] or hmlm['mu1_idx'][ind1][jnd1] == df['mu2_genPartIdx'][ind2]) or (hmlm['mu2_idx'][ind1][jnd1] == df['mu1_genPartIdx'][ind2] or hmlm['mu2_idx'][ind1][jnd1] == df['mu2_genPartIdx'][ind2])):
+
+                        #the third muon has perfect match (than it's ok)
+                        if hmlm['mu3_idx'][ind1][jnd1] == df['k_genPartIdx'][ind2]:
+                            flag = 1
+                            ancestors_flag.append(int(hmlm['jpsi_ancestor_idx'][ind1][jnd1] == hmlm['mu3_ancestor_idx'][ind1][jnd1]))
+                            break
+                        
+                        #third muon doesn't have a perfect match, but it's the last choice
+                        elif hmlm['mu3_idx'][ind1][jnd1] != df['k_genPartIdx'][ind2] and jnd1 == len(hmlm['index'][ind1])-1:
+                            flag = 1
+                            ancestors_flag.append(int(hmlm['jpsi_ancestor_idx'][ind1][jnd1] == hmlm['mu3_ancestor_idx'][ind1][jnd1]))
+                            print("jpsi not perfect match and different mu3",ind2,ind1,jnd1,len(hmlm['index'][ind1]),hmlm['mu1_idx'][ind1][jnd1],df['mu1_genPartIdx'][ind2],df['mu1_genpdgId'][ind2],hmlm['mu2_idx'][ind1][jnd1],df['mu2_genPartIdx'][ind2],df['mu2_genpdgId'][ind2],hmlm['mu3_idx'][ind1][jnd1],df['k_genPartIdx'][ind2],df['k_genpdgId'][ind2])
+                            break
+
+                    # the jpsi has no match at all and it's the last event you are checking
+                    elif(not((hmlm['mu1_idx'][ind1][jnd1] == df['mu1_genPartIdx'][ind2] or hmlm['mu1_idx'][ind1][jnd1] == df['mu2_genPartIdx'][ind2]) or (hmlm['mu2_idx'][ind1][jnd1] == df['mu1_genPartIdx'][ind2] or hmlm['mu2_idx'][ind1][jnd1] == df['mu2_genPartIdx'][ind2])) and jnd1 == len(hmlm['index'][ind1])-1):
+                        flag = 1
+                        ancestors_flag.append(int(hmlm['jpsi_ancestor_idx'][ind1][jnd1] == hmlm['mu3_ancestor_idx'][ind1][jnd1]))
+                        print("jpsi no match",ind2,ind1,jnd1,len(hmlm['index'][ind1]),hmlm['mu1_idx'][ind1][jnd1],df['mu1_genPartIdx'][ind2],df['mu1_genpdgId'][ind2],hmlm['mu2_idx'][ind1][jnd1],df['mu2_genPartIdx'][ind2],df['mu2_genpdgId'][ind2],hmlm['mu3_idx'][ind1][jnd1],df['k_genPartIdx'][ind2],df['k_genpdgId'][ind2])
+                        break
+                                                                        
+                if flag ==0:
+                    print(ind2,hmlm['mu1_idx'][ind1][jnd1],df['mu1_genPartIdx'][ind2],df['mu1_genpdgId'][ind2],hmlm['mu2_idx'][ind1][jnd1],df['mu2_genPartIdx'][ind2],df['mu2_genpdgId'][ind2],hmlm['mu3_idx'][ind1][jnd1],df['k_genPartIdx'][ind2],df['k_genpdgId'][ind2])
+                    raise ValueError("Error in the Division of the Hb MC into High Mass and Low Mass contributions")
+    if len(ancestors_flag)!=len(df['index']):
+        raise ValueError("Error in the Division of the Hb MC into High Mass and Low Mass contributions")
+    df['hmlm_flag'] = ancestors_flag
+    return df
 #######################################################################################
 ######  STARTING THE SCRIPT ##########################################################
 #######################################################################################
 
 nprocessedAll = 0
-channels = ['BTo3Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']
+channels = REPLACE_CHANNELS
 
 #loop on input datasets
 for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_onia,args.mc_gen]: 
@@ -460,8 +580,6 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
     nFiles = 0
     for i,fname in enumerate(paths):
         fname= fname.strip('\n')
-        if(i%1==0):
-            print("Processing file ", fname)
         
         if(i < skipFiles): # if I want to skip 1 file, I want to skip i=0 -> i+1
             print("Skipping the file...")
@@ -471,6 +589,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
             print("No! Max number of files reached!")
             break
         nFiles +=1
+        print("Processing file ", fname)
        
         # Create nf before the loop on the channels (because it reopens the file)
         nf = NanoFrame(fname, )
@@ -485,9 +604,12 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
             bcands['event'] = nf['event']
             bcands['run'] = nf['run']
             bcands['luminosityBlock'] = nf['luminosityBlock']    
-            if(len(nf[channel]) == 0):
-                print("Empty channel!")
-                continue
+            
+
+            #WHAT about this?
+            #if(len(nf[channel]) == 0):
+            #    print("Empty channel!")
+            #    continue
             bcands['l_xy_sig'] = bcands.bodies3_l_xy / np.sqrt(bcands.bodies3_l_xy_unc)
             bcands['fixedGridRhoFastjetAll'] = nf['fixedGridRhoFastjetAll']
             bcands['fixedGridRhoFastjetCentral'] = nf['fixedGridRhoFastjetCentral']
@@ -509,11 +631,36 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                 bcands['is_jpsi_3pi'] = nf['DecayFlag_is_jpsi_3pi']
                 bcands['is_jpsi_hc'] = nf['DecayFlag_is_jpsi_hc']
 
+                #bc gen info
+                bcands['BcGenInfo_bc_gen_pt'] = nf['BcGenInfo_bc_gen_pt']
+                bcands['BcGenInfo_bc_gen_eta'] = nf['BcGenInfo_bc_gen_eta']
+                bcands['BcGenInfo_bc_gen_phi'] = nf['BcGenInfo_bc_gen_phi']
+                bcands['BcGenInfo_bc_gen_mass'] = nf['BcGenInfo_bc_gen_mass']
+                
+                bcands['BcGenInfo_jpsi_gen_pt'] = nf['BcGenInfo_jpsi_gen_pt']
+                bcands['BcGenInfo_jpsi_gen_eta'] = nf['BcGenInfo_jpsi_gen_eta']
+                bcands['BcGenInfo_jpsi_gen_phi'] = nf['BcGenInfo_jpsi_gen_phi']
+                bcands['BcGenInfo_jpsi_gen_mass'] = nf['BcGenInfo_jpsi_gen_mass']
+                
+
+                bcands['BcGenInfo_tau_gen_pt'] = nf['BcGenInfo_tau_gen_pt']
+                bcands['BcGenInfo_tau_gen_eta'] = nf['BcGenInfo_tau_gen_eta']
+                bcands['BcGenInfo_tau_gen_phi'] = nf['BcGenInfo_tau_gen_phi']
+                bcands['BcGenInfo_tau_gen_mass'] = nf['BcGenInfo_tau_gen_mass']
+                
+                bcands['BcGenInfo_mu3_gen_pt'] = nf['BcGenInfo_mu3_gen_pt']
+                bcands['BcGenInfo_mu3_gen_eta'] = nf['BcGenInfo_mu3_gen_eta']
+                bcands['BcGenInfo_mu3_gen_phi'] = nf['BcGenInfo_mu3_gen_phi']
+                bcands['BcGenInfo_mu3_gen_mass'] = nf['BcGenInfo_mu3_gen_mass']
+
             ###########################################
             ###### GEN weights for HbToJpsiMu MC ######
             ###########################################
 
             if(dataset == args.mc_hb):
+                #useful for splitting Hb into highmass and lowmass
+                bcands['index'] = [[i for subitem in item] for i,item in enumerate(bcands['event'])]
+                #jpsi mother division
                 bcands['jpsimother_bzero'] = nf['JpsiMotherFlag_bzero']
                 bcands['jpsimother_bplus'] = nf['JpsiMotherFlag_bplus']
                 bcands['jpsimother_bplus_c'] = nf['JpsiMotherFlag_bplus_c']
@@ -581,7 +728,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                 mu2 = JaggedCandidateArray.zip({n: mu2_new[n] for n in mu2_new.columns})
                 k = JaggedCandidateArray.zip({n: k_new[n] for n in k_new.columns})
                 bcands = JaggedCandidateArray.zip({n: bcands[mask][n] for n in bcands[mask].columns})
-            
+
             # add gen info as a column of the muon
             if (dataset!=args.data):
                 #pile up weights only for mc and if flag ==True
@@ -634,7 +781,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
             # very loose selection here
             b_selection = ((bcands.p4.mass < 10 ) & (bcands.bodies3_svprob > 1e-7))
             x_selection= (bcands.p4.pt > -99)
-        
+
             #Delete the signal from the JpsiX MC
             if (dataset==args.mc_onia or dataset==args.mc_hb):
                 if(channel == 'BTo2Mu3P'):
@@ -642,6 +789,9 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
 
                 else:
                     x_selection= ~ ((bcands.k.genPartIdx>=0) & ( bcands.mu1.genPartIdx>=0) & (bcands.mu2.genPartIdx>=0) & (abs(bcands.mu1.mother.pdgId) == 443) & (abs(bcands.mu2.mother.pdgId) == 443) & (abs(bcands.mu1.grandmother.pdgId) == 541) & (abs(bcands.mu2.grandmother.pdgId) == 541) & ( (abs(bcands.k.mother.pdgId)==541) | ( (abs(bcands.k.mother.pdgId)==15) & (abs(bcands.k.grandmother.pdgId)== 541))))
+
+            if channel == 'BTo2MuP':
+                x_selection = x_selection & ((bcands.mu2.p4.pt>1) & (bcands.mu1.p4.pt>1) & (bcands.k.p4.pt>1) & (bcands.p4.mass<10) & (bcands.mu2.p4.eta<2.5) & (bcands.mu1.p4.eta<2.5) & (bcands.k.p4.eta<2.5))
 
             #######################################
             ###### MC Bc types ###################
@@ -670,7 +820,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                 best_pf_cand_pt = bcands[b_selection & x_selection & selection ].p4.pt.argmax() #B with higher pt
                 bcands_flag = (bcands[b_selection & x_selection & selection][best_pf_cand_pt]).flatten()
 
-
+                
                 ###########################################################################
                 ##########  Saving all the useful branches for the flat ntuples ###########
                 ###########################################################################
@@ -681,9 +831,12 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                     dfs[name] = pd.DataFrame()
                     df = dfs[name]
                     df['event'] = tab['event']
+                    if len(df['event']) == 0:
+                        continue
                     df['run'] = tab['run']
                     df['luminosityBlock'] = tab['luminosityBlock']
-
+                    if dataset == args.mc_hb:
+                        df['index'] = tab['index']
                     #Bc Vertex properties
                     df['bvtx_chi2'] = tab.bodies3_chi2
                     df['bvtx_svprob'] = tab.bodies3_svprob
@@ -1128,9 +1281,12 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
 
                     #is PF ?
                     df['mu1_isPF'] = tab.mu1.isPFcand
+                    df['mu1_isPF'] = df['mu1_isPF'].astype(int)
                     df['mu2_isPF'] = tab.mu2.isPFcand
+                    df['mu2_isPF'] = df['mu2_isPF'].astype(int)
                     if(chan == 'BTo3Mu'):
                         df['k_isPF'] = tab.k.isPFcand
+                        df['k_isPF'] = df['k_isPF'].astype(int)
                         
                     df['nB'] = sel.sum()[sel.sum() != 0]
 
@@ -1220,6 +1376,27 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                             df['puWeight'] = tab.puWeight
                             df['puWeightUp'] = tab.puWeightUp
                             df['puWeightDown'] = tab.puWeightDown
+                        if(dataset == args.mc_bc):    
+                            # branches of the Bc GEN info (for hammer)
+                            df['bc_gen_pt'] = tab.BcGenInfo_bc_gen_pt
+                            df['bc_gen_eta'] = tab.BcGenInfo_bc_gen_eta
+                            df['bc_gen_phi'] = tab.BcGenInfo_bc_gen_phi
+                            df['bc_gen_mass'] = tab.BcGenInfo_bc_gen_mass
+                            
+                            df['jpsi_gen_pt'] = tab.BcGenInfo_jpsi_gen_pt
+                            df['jpsi_gen_eta'] = tab.BcGenInfo_jpsi_gen_eta
+                            df['jpsi_gen_phi'] = tab.BcGenInfo_jpsi_gen_phi
+                            df['jpsi_gen_mass'] = tab.BcGenInfo_jpsi_gen_mass
+                            
+                            df['tau_gen_pt'] = tab.BcGenInfo_tau_gen_pt
+                            df['tau_gen_eta'] = tab.BcGenInfo_tau_gen_eta
+                            df['tau_gen_phi'] = tab.BcGenInfo_tau_gen_phi
+                            df['tau_gen_mass'] = tab.BcGenInfo_tau_gen_mass
+                            
+                            df['mu3_gen_pt'] = tab.BcGenInfo_mu3_gen_pt
+                            df['mu3_gen_eta'] = tab.BcGenInfo_mu3_gen_eta
+                            df['mu3_gen_phi'] = tab.BcGenInfo_mu3_gen_phi
+                            df['mu3_gen_mass'] = tab.BcGenInfo_mu3_gen_mass
 
                         #gen Part Flavour e gen Part Idx  -> if I need to access the gen info, this values tell me is it is a valid info or not
                         df['mu1_genPartFlav'] = tab.mu1.genPartFlav
@@ -1484,11 +1661,26 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                         if channel == 'BTo3Mu':
                             df = rho_corr_iso(df)
                     df = decaytime(df)
+                    if channel == 'BTo3Mu':
+                        df = bp4_lhcb(df)
+                        if (dataset == args.mc_hb):
+                            df = HighMassLowMassDivision(df)
+                                        
+                    flag_init_hammer = 0
+                    #print("dataset:",dataset," channel:", channel)
                     if((dataset == args.mc_mu or (dataset == args.mc_bc and name == 'is_jpsi_mu')) and flag_hammer_mu and channel =='BTo3Mu'):
-                        df = hammer_weights_mu(df)
-                    if((dataset == args.mc_tau or (dataset == args.mc_bc and name == 'is_jpsi_tau')) and flag_hammer_tau and channel =='BTo3Mu'):
-                        df = hammer_weights_tau(df)
+                        if not flag_init_hammer:
+                            ham = Hammer()
+                            fbBuffer = IOBuffer
+                            flag_init_hammer =1
+                        df = hammer_weights_mu(df,ham)
 
+                    if((dataset == args.mc_tau or (dataset == args.mc_bc and name == 'is_jpsi_tau')) and flag_hammer_tau and channel =='BTo3Mu'):
+                        if not flag_init_hammer:
+                            ham = Hammer()
+                            fbBuffer = IOBuffer
+                            flag_init_hammer =1
+                        df = hammer_weights_tau(df,ham)
                     ##########################################################
                     ##### Concatenate the dataframe to the total one #########
                     ##########################################################
@@ -1509,18 +1701,18 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
     dataset=dataset.strip('.txt')
     name=dataset.split('/')
     d=name[len(name)-1].split('_')
-    adj='_prova_'
+    adj='_v7_'
   
     for flag in flag_names:
         for channel in channels:
             if channel == 'BTo3Mu':
-                final_dfs_mmm[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel)
+                final_dfs_mmm[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+'.root', key=channel)
             elif (channel == 'BTo2MuP'):
-                final_dfs_pmm[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel, mode = 'a')
+                final_dfs_pmm[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+'.root', key=channel, mode = 'a')
             elif (channel == 'BTo2MuK'):
-                final_dfs_kmm[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel, mode = 'a')
+                final_dfs_kmm[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+'.root', key=channel, mode = 'a')
             elif (channel == 'BTo2Mu3P'):
-                final_dfs_2m3p[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel, mode = 'a')
-        print("Saved file dataframes_local/"+ d[0]+'_'+flag+adj+'.root')
+                final_dfs_2m3p[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+'.root', key=channel, mode = 'a')
+        print("Saved file "+ 'REPLACE_FILE_OUT'+'_'+flag+'.root')
 
 print('DONE! Processed events: ', nprocessedAll)
