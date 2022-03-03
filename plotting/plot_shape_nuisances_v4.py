@@ -6,7 +6,7 @@ Difference with v1:
 
 import ROOT
 from officialStyle import officialStyle
-from samples import sample_names as complete_sample_names
+from samples import sample_names, sample_names_explicit_all, sample_names_explicit_jpsimother_compressed
 from cmsstyle import CMS_lumi
 import os
 from histos import histos
@@ -17,7 +17,8 @@ ROOT.gStyle.SetOptStat(0)
 
 sfrange = 16
 
-def plot_shape_nuisances(histos_folder, variable, channel, sample_names=complete_sample_names, plot3d = False, fakes = True, path = '/work/friti/rjpsi_tools/CMSSW_10_6_14/src/RJpsiTools/plotting/plots_ul/', compute_sf = False, verbose = False, compute_sf_onlynorm = False):
+def plot_shape_nuisances(histos_folder, variable, channel, sample_names=sample_names, which_sample_single_bbb =[], plot3d = False, fakes = True, path = '/work/friti/rjpsi_tools/CMSSW_10_6_14/src/RJpsiTools/plotting/plots_ul/', compute_sf = False, verbose = False, compute_sf_onlynorm = False):
+
     '''
     Function that plots the systematic shape uncertainties in a root file.
     It takes as input the 
@@ -36,7 +37,6 @@ def plot_shape_nuisances(histos_folder, variable, channel, sample_names=complete
     if not os.path.exists(path_out_2) : os.system('mkdir -p %s'%path_out_2)
     path_out = path_out_2 + '/'+channel
     if not os.path.exists(path_out) : os.system('mkdir -p %s'%path_out)
-
 
     datacard_path = path+histos_folder+'/datacards/datacard_'+channel+'_'+variable+'.root'
     if verbose : print("Opening datacard: "+datacard_path+"")
@@ -57,12 +57,13 @@ def plot_shape_nuisances(histos_folder, variable, channel, sample_names=complete
     ctau_syst = ['ctau',]
     pu_syst = ['puWeight']
 
-    his_tmp = fin.Get('jpsi_x_mu_'+channel)
+    his_tmp = fin.Get('fakes_'+channel)
     nbins = his_tmp.GetNbinsX()
 
     bbb_syst = ['bbb'+str(i)+channel for i in range(1,nbins+1)]
 
     total_syst = hammer_syst + ctau_syst + pu_syst + bbb_syst 
+    #total_syst = pu_syst 
 
     # Don't compute these because they are approximable to a normalisation nuisance
     # Keep the code in case we need to compute average and max again
@@ -76,8 +77,10 @@ def plot_shape_nuisances(histos_folder, variable, channel, sample_names=complete
         print("==== Computing Reco and Id SF uncertainties for "+variable+" ========")
         print("==============================================================")
         sf_reco_syst = ['sfReco']
-        sf_id_syst = ['sfId']
-        total_syst = total_syst + sf_reco_syst + sf_id_syst
+        sf_idjpsi_syst = ['sfIdJpsi']
+        sf_idk_syst = ['sfIdk']
+        #sf_id_syst = ['sfId']
+        total_syst = total_syst + sf_reco_syst + sf_idjpsi_syst + sf_idk_syst
 
     # Plot 
     c3 = ROOT.TCanvas('c3', '', 700, 700)
@@ -121,12 +124,25 @@ def plot_shape_nuisances(histos_folder, variable, channel, sample_names=complete
 
                 # Only Bc datasets have the ctau systematics
                 if syst in ctau_syst:
-                    if sname == 'jpsi_x' or sname == 'jpsi_x_mu':
+                    if sname == 'jpsi_x' or 'jpsi_x_mu' in sname:
                         continue
+                #No fail
+                #if compute_sf_onlynorm and syst in sf_idk_syst:
+                #    if channel!= 'ch1' and channel != 'ch3':
+                #        continue
                 if syst in bbb_syst:
-                    if sname != 'jpsi_x_mu':
+                    if 'jpsi_x_mu' not in sname:
                         continue
+                    # only single bbb
+                    if len(which_sample_single_bbb)>=1:
+                        #print("yes",which_sample_single_bbb[int(syst.replace('bbb','').replace(channel,''))-1], sname)
+                        if not 'jpsi_x_mu_from_'+which_sample_single_bbb[int(syst.replace('bbb','').replace(channel,''))-1] == sname:
+                            continue
+                        else:
+                            syst = 'single_'+syst
+                    syst = sname +'_'+syst
                 his_up = fin.Get(sname+'_'+syst+'Up_'+channel)
+                #print(sname+'_'+syst+'Up_'+channel)
                 histo_up = ROOT.TH1F(sname+'_'+syst+'Up',sname+'_'+syst+'Up', nbins, xmin, xmax)
                 for i in range(1,his_up.GetNbinsX()+1):
                     histo_up.SetBinContent(i,his_up.GetBinContent(i))
@@ -210,18 +226,21 @@ def plot_shape_nuisances(histos_folder, variable, channel, sample_names=complete
             
                 # COmpute the scale factors for muons as normalisations
                 if compute_sf_onlynorm:
-                    if syst in sf_reco_syst or syst in sf_id_syst:
+                    if syst in sf_reco_syst or syst in sf_idjpsi_syst or syst in sf_idk_syst:
                         nuisance = histo_up.Integral()/histo_central.Integral()
                         if syst in sf_reco_syst:
                             print(sname," reco:",nuisance)
-                        elif syst in sf_id_syst:
-                            print(sname," id:",nuisance)
+                        elif syst in sf_idjpsi_syst:
+                            print(sname," id jpsi:",nuisance)
+                        elif syst in sf_idk_syst:
+                            print(sname," id k:",nuisance)
 
 
 
 if __name__ == "__main__":
 
-    histos_folder = '03Dec2021_13h45m02s'
-    variable = 'Bmass'
-    plot_shape_nuisances(histos_folder, variable,'ch3', [],verbose = False, compute_sf_onlynorm = True)
+    histos_folder = '07Feb2022_13h40m17s'
+    variable = 'Q_sq'
+    plot_shape_nuisances(histos_folder, variable,'ch2',sample_names_explicit_jpsimother_compressed )
     
+#def plot_shape_nuisances(histos_folder, variable, channel, sample_names=sample_names, which_sample_single_bbb =[], plot3d = False, fakes = True, path = '/work/friti/rjpsi_tools/CMSSW_10_6_14/src/RJpsiTools/plotting/plots_ul/', compute_sf = False, verbose = False, compute_sf_onlynorm = False):
