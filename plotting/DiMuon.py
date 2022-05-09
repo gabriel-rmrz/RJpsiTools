@@ -34,16 +34,21 @@ from create_datacard_v3 import create_datacard_ch1, create_datacard_ch2, create_
 ROOT.ROOT.EnableImplicitMT()
 
 
-def get_DiMuonBkg(selection, var_index):
-    
+def get_DiMuonBkg(selection, var_index, isfail, label, channel):
+
+    if not os.path.exists('plots_ul/'+label+'/dimuon/'):
+        os.makedirs('plots_ul/'+label+'/dimuon/')
+
     tree_name = 'BTo3Mu'
     tree_dir = '/pnfs/psi.ch/cms/trivcat/store/user/friti/dataframes_Dec2021/'
         
     dataframe = {}
-    dataframe["SR"] = ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged_fakerate.root'%(tree_dir))
+    #dataframe["SR"] = ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged_fakerate.root'%(tree_dir))
+    dataframe["SR"] = ROOT.RDataFrame(tree_name,'%s/data_fakerate_only_iso.root'%(tree_dir))
     #dataframe["ResonantTrg"] = ROOT.RDataFrame(tree_name,'%s/data_ptmax_merged_fakerate.root'%(tree_dir)) 
     #dataframe["NonResonantTrg"] = ROOT.RDataFrame(tree_name,'%s/datalowmass_ptmax_merged_fakerate.root'%(tree_dir))
-    dataframe["SBs"] = ROOT.RDataFrame(tree_name,{'%s/datalowmass_ptmax_merged_fakerate_2.root'%(tree_dir), '%s/data_ptmax_merged_fakerate.root'%(tree_dir)})
+    #dataframe["SBs"] = ROOT.RDataFrame(tree_name,{'%s/datalowmass_ptmax_merged_fakerate_2.root'%(tree_dir), '%s/data_ptmax_merged_fakerate.root'%(tree_dir)})
+    dataframe["SBs"] = ROOT.RDataFrame(tree_name,{'%s/datalowmass_fakerate_only_iso.root'%(tree_dir), '%s/data_fakerate_only_iso.root'%(tree_dir)})
     regions = list(dataframe.keys())
     
     print("==================================")
@@ -51,23 +56,25 @@ def get_DiMuonBkg(selection, var_index):
     print("==================================")
     print("regions: ", regions)
 
-    sanitycheck                   = False
+    sanitycheck                           = True
     
-    #hists                        = {}
-    Q2hist                        = {}
-    Q2_extrap_hist                = {}
-    m_miss_extrap_hist            = {}
-    pt_var_extrap_hist            = {}
-    pt_miss_vec_extrap_hist       = {}
-    pt_miss_scal_extrap_hist      = {}
-    m_miss_extrap_hist            = {}
-    JpsimassShape                 = {}
-    Jpsimass                      = {}
-    JpsimassSB                    = {}
-    JpsimassLSB                   = {}
-    Q2LSBcanvas                   = {}
-    Q2_extrapcanvas               = {}
-    DimuonShape                   = {}
+    #hists                                = {}
+    Q2hist                                = {}
+    Q2_extrap_hist                        = {}
+    m_miss_extrap_hist                    = {}
+    pt_var_extrap_hist                    = {}
+    pt_miss_vec_extrap_hist               = {}
+    pt_miss_scal_extrap_hist              = {}
+    m_miss_extrap_hist                    = {}
+    jpsivtx_log10_lxy_sig_estrap_hist     = {}
+    JpsimassShape                         = {}
+    Jpsimass                              = {}
+    JpsimassSB                            = {}
+    JpsimassLSB                           = {}
+    Q2LSBcanvas                           = {}
+    Q2_extrapcanvas                       = {}
+    DimuonShape                           = {}
+    
     
     ######################
     ##### Defintions #####
@@ -85,7 +92,14 @@ def get_DiMuonBkg(selection, var_index):
     '''for s in ["SBs"]:
     filterLSB = ' & '.join([preselectionLSB, pass_id])
     hists[s] = dataframe[s].Filter(filterLSB).Histo1D(('Q2LSB%s'%s,"Q2LSB;  q^{2} [GeV^{2}]; Events/0.5 GeV",24,0,10.5),"Q_sq")'''
-    
+
+    #define new columns
+    for s in ["SR", "SBs"]:
+        for new_column, new_definition in to_define: 
+            if dataframe[s].HasColumn(new_column):
+                continue       
+            dataframe[s] = dataframe[s].Define(new_column, new_definition)
+        
     ### Get the relevant histos and information from the DataFrames  ###
     
     ### Get the histo with the full invariant-mass distribution to extract the Dimuon shape ###
@@ -97,7 +111,7 @@ def get_DiMuonBkg(selection, var_index):
         SBMasscanvas = TCanvas("SBMassc", "SBMassc")
         SBMasscanvas.cd()
         JpsimassShape["SBs"].Draw("pe")
-        SBMasscanvas.Print('SBMasscanvas.png')
+        SBMasscanvas.Print('plots_ul/'+label+'/dimuon/SBMasscanvas_'+channel+'.png')
         
     ### LSB ###
     #filterLSB = ' & '.join([preselectionLSB, pass_id])
@@ -114,7 +128,7 @@ def get_DiMuonBkg(selection, var_index):
         Q2LSBcanvas = TCanvas("Q2LSBcan", "Q2LSBcan")
         Q2LSBcanvas.cd()
         Q2hist["SBs"].Draw("pe")
-        Q2LSBcanvas.Print('Q2LSBcan.png') 
+        Q2LSBcanvas.Print('plots_ul/'+label+'/dimuon/Q2LSBcan_'+channel+'.png') 
                 
         '''for s in ["SBs"]:
         Q2LSBcanvas[s] = TCanvas("Q2LSBc", "Q2LSBc")
@@ -132,7 +146,7 @@ def get_DiMuonBkg(selection, var_index):
         SRMasscanvas = TCanvas("SRMassc", "SRMassc")
         SRMasscanvas.cd()
         Jpsimass["SR"].Draw("pe")
-        SRMasscanvas.Print('SRMasscanvas.png')
+        SRMasscanvas.Print('plots_ul/'+label+'/dimuon/SRMasscanvas'+channel+'.png')
 
     ############################# 
     ####### Dimuon Shape  #######
@@ -175,36 +189,55 @@ def get_DiMuonBkg(selection, var_index):
         }
         """)
 
-    if var_index == 0: 
+    if var_index == 0:
         dataframe["SBs"] = dataframe["SBs"].Filter(filterLSB).Define("Q_sq_extrap", "SB_extrap(Bpt_reco, 0, Jpsi_scale, mu1pt, mu1eta, mu1phi, mu1mass, mu2pt, mu2eta, mu2phi, mu2mass, kpt, keta, kphi, kmass)")
-        Q2_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("Q_sqLSB_extrap","Q_sqLSB_extrap;  q^{2} [GeV^{2}];",20,5.5,10),"Q_sq_extrap")
+        if isfail:
+            Q2_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("Q_sqLSB_extrap","Q_sqLSB_extrap;  q^{2} [GeV^{2}];",20,5.5,10),"Q_sq_extrap", 'fakerate_data_2')
+        else:
+            Q2_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("Q_sqLSB_extrap","Q_sqLSB_extrap;  q^{2} [GeV^{2}];",20,5.5,10),"Q_sq_extrap")
         #DimuonShape = Q2_extrap_hist["SBs"].GetValue()
         DimuonShape = Q2_extrap_hist["SBs"]
     elif var_index == 1:
         dataframe["SBs"] = dataframe["SBs"].Filter(filterLSB).Define("m_miss_sq_extrap", "SB_extrap(Bpt_reco, 1, Jpsi_scale, mu1pt, mu1eta, mu1phi, mu1mass, mu2pt, mu2eta, mu2phi, mu2mass, kpt, keta, kphi, kmass)")
-        m_miss_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("m_miss_sqLSB_extrap","m_miss_sq_extrap;  q^{2} [GeV^{2}];",50,0,9),"m_miss_sq_extrap")
-        #DimuonShape = m_miss_extrap_hist["SBs"].GetValue()
+        if isfail:
+            m_miss_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("m_miss_sqLSB_extrap","m_miss_sq_extrap;  q^{2} [GeV^{2}];",50,0,9),"m_miss_sq_extrap", 'fakerate_data_2')
+        else:
+            m_miss_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("m_miss_sqLSB_extrap","m_miss_sq_extrap;  q^{2} [GeV^{2}];",50,0,9),"m_miss_sq_extrap")
         DimuonShape = m_miss_extrap_hist["SBs"]
     elif var_index == 2:
         dataframe["SBs"] = dataframe["SBs"].Filter(filterLSB).Define("pt_var_extrap", "SB_extrap(Bpt_reco, 2, Jpsi_scale, mu1pt, mu1eta, mu1phi, mu1mass, mu2pt, mu2eta, mu2phi, mu2mass, kpt, keta, kphi, kmass)")
-        pt_var_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_varLSB_extrap","pt_var_extrap;  p_{T}^{var} [GeV];",50,0,50),"pt_var_extrap")
-        #DimuonShape = pt_var_extrap_hist["SBs"].GetValue()
+        if isfail:
+            pt_var_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_varLSB_extrap","pt_var_extrap;  p_{T}^{var} [GeV];",50,0,50),"pt_var_extrap", 'fakerate_data_2')
+        else:
+            pt_var_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_varLSB_extrap","pt_var_extrap;  p_{T}^{var} [GeV];",50,0,50),"pt_var_extrap")
         DimuonShape = pt_var_extrap_hist["SBs"]
     elif var_index == 3:
         dataframe["SBs"] = dataframe["SBs"].Filter(filterLSB).Define("pt_miss_vec_extrap", "SB_extrap(Bpt_reco, 3, Jpsi_scale, mu1pt, mu1eta, mu1phi, mu1mass, mu2pt, mu2eta, mu2phi, mu2mass, kpt, keta, kphi, kmass)")
-        pt_miss_vec_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_miss_vecLSB_extrap","pt_miss_vec_extrap;  vector p_{T}^{miss} [GeV];",50,0,30),"pt_miss_vec_extrap")
-        #imuonShape = pt_miss_vec_extrap_hist["SBs"].GetValue()
-        DimuonShape = pt_miss_vec_extrap_hist["SBs"].GetValue()
+        if isfail:
+            pt_miss_vec_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_miss_vecLSB_extrap","pt_miss_vec_extrap;  vector p_{T}^{miss} [GeV];",50,0,30),"pt_miss_vec_extrap", 'fakerate_data_2')
+        else:
+            pt_miss_vec_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_miss_vecLSB_extrap","pt_miss_vec_extrap;  vector p_{T}^{miss} [GeV];",50,0,30),"pt_miss_vec_extrap")
+        DimuonShape = pt_miss_vec_extrap_hist["SBs"]
     elif var_index == 4:
         dataframe["SBs"] = dataframe["SBs"].Filter(filterLSB).Define("pt_miss_scal_extrap", "SB_extrap(Bpt_reco, 4, Jpsi_scale, mu1pt, mu1eta, mu1phi, mu1mass, mu2pt, mu2eta, mu2phi, mu2mass, kpt, keta, kphi, kmass)")
-        pt_miss_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_miss_scalLSB_extrap","pt_miss_scal_extrap;  scalar p_{T}^{miss} [GeV];",60,-10,50),"pt_miss_scal_extrap")
-        DimuonShape = pt_miss_scal_extrap_hist["SBs"].GetValue()
+        if isfail:
+            pt_miss_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_miss_scalLSB_extrap","pt_miss_scal_extrap;  scalar p_{T}^{miss} [GeV];",60,-10,50),"pt_miss_scal_extrap", 'fakerate_data_2')
+        else:
+            pt_miss_extrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("pt_miss_scalLSB_extrap","pt_miss_scal_extrap;  scalar p_{T}^{miss} [GeV];",60,-10,50),"pt_miss_scal_extrap")
+        DimuonShape = pt_miss_scal_extrap_hist["SBs"] 
+    elif var_index == 5:
+        # This is the variable to be used for the HM (channel 3, pass,  and channel 4, fail). Since it's a vertex variable, the extrapolation from SB to SR with the techinque is not needed. Indeed, this extrapolation rescales the mass part of the 4-momentum of the Jpsi 4-momentum. Since vertex variables are not touched, we can simply move the variable from the SB to the SR.
+        if isfail:
+            jpsivtx_log10_lxy_sig_estrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("jpsivtx_log10_lxy_sigLSB_extrap","jpsivtx_log10_lxy_sig_extrap; log_{10} vtx(#mu_{1}, #mu_{2}) L_{xy}/#sigma_{L_{xy}};",20,-1,1),"jpsivtx_log10_lxy_sig", 'fakerate_data_2')
+        else:
+            jpsivtx_log10_lxy_sig_estrap_hist["SBs"] = dataframe["SBs"].Filter(filterLSB).Histo1D(("jpsivtx_log10_lxy_sigLSB_extrap","jpsivtx_log10_lxy_sig_extrap; log_{10} vtx(#mu_{1}, #mu_{2}) L_{xy}/#sigma_{L_{xy}};",20,-1,1),"jpsivtx_log10_lxy_sig")
+        DimuonShape = jpsivtx_log10_lxy_sig_estrap_hist["SBs"]
         
     if(sanitycheck):
         Q2_extrapcanvas = TCanvas("Q2_extrapcanvasc", "Q2_extrapcanvasc")
         Q2_extrapcanvas.cd()
-        Q2_extrap_hist["SBs"].Draw("pe")
-        Q2_extrapcanvas.Print('Q2_extrapcanvas.png')
+        DimuonShape.Draw("pe")
+        Q2_extrapcanvas.Print('plots_ul/'+label+'/dimuon/Q2_extrapcanvas'+channel+'.png')
         
     #################################### 
     ####### Dimuon Normalization #######
@@ -261,13 +294,14 @@ def get_DiMuonBkg(selection, var_index):
     SBdataset   = ROOT.RooDataHist("SBdataset", "SBdataset", ROOT.RooArgList(massSB), HJpsimassSB)
     framemassSB = massSB.frame(ROOT.RooFit.Name(""), ROOT.RooFit.Title(""), ROOT.RooFit.Bins(200))
     SBdataset.plotOn(framemassSB,ROOT.RooFit.Binning(200, 2, 4),ROOT.RooFit.MarkerSize(1.5))
-    PDFSB.fitTo(SBdataset,ROOT.RooFit.Save())
+    PDFSB.fitTo(SBdataset,ROOT.RooFit.Save())#,RooFit.PrintLevel(-1),RooFit.PrintEvalErrors(-1))
+
     PDFSB.plotOn(framemassSB)
     if(sanitycheck):
         JpsiMassSBCanvas = TCanvas("FitShapeJpsiMassSB", "FitShapeJpsiMassSB")
         JpsiMassSBCanvas.cd()
         framemassSB.Draw()
-        JpsiMassSBCanvas.Print('FitShapeJpsiMassSB.png')
+        JpsiMassSBCanvas.Print('plots_ul/'+label+'/dimuon/FitShapeJpsiMassSB'+channel+'.png')
         
     BkgShapetoFix = bkgSlope.getVal()                                       
     if(sanitycheck):
@@ -279,7 +313,7 @@ def get_DiMuonBkg(selection, var_index):
     SRdataset.plotOn(framemass,ROOT.RooFit.Name("data"),ROOT.RooFit.Binning(200, 2, 4))
     bkgSlope.setConstant(ROOT.kTRUE)
     bkgSlope.setVal(BkgShapetoFix)
-    CompletePDF.fitTo(SRdataset,ROOT.RooFit.Save())
+    CompletePDF.fitTo(SRdataset,ROOT.RooFit.Save())#,RooFit.PrintLevel(-1),RooFit.PrintEvalErrors(-1))
     CompletePDF.plotOn(framemass)
     CompletePDF.plotOn(framemass,ROOT.RooFit.Components("Expo"),ROOT.RooFit.LineColor(ROOT.kGreen),ROOT.RooFit.FillColor(ROOT.kGreen),ROOT.RooFit.DrawOption("F"),ROOT.RooFit.MoveToBack())
     CompletePDF.plotOn(framemass,ROOT.RooFit.Components("CBall"),ROOT.RooFit.LineColor(ROOT.kGray),ROOT.RooFit.FillColor(ROOT.kGray),ROOT.RooFit.DrawOption("F"),ROOT.RooFit.MoveToBack())
@@ -356,17 +390,18 @@ def get_DiMuonBkg(selection, var_index):
         framemassPulls.Draw()
         #framemass.Draw()
         #Jpsimass["SR"].Draw("pe")
-        JpsiMassSRCanvas.Print('FitJpsiMassSR.png')
+        JpsiMassSRCanvas.Print('plots_ul/'+label+'/dimuon/FitJpsiMassSR'+channel+'.png')
         #CompletePDF.Draw("SAME")
         
     Normalization = NBkg.getVal()/DimuonShape.Integral()
-    DimuonShape.GetValue().Scale(Normalization)
+    #DimuonShape.GetValue().Scale(Normalization)
+    DimuonShape.Scale(Normalization)
     if(sanitycheck):
         print("Dimuon Normalization: ",  Normalization)
         DiMuonShapeCanvas = TCanvas("DiMuonShapeCanvas", "DiMuonShapeCanvas", 0, 0, 700, 700)
         DiMuonShapeCanvas.cd()
         DimuonShape.GetValue().Draw("pe")
-        DiMuonShapeCanvas.Print('NormalizedDiMuonShape.png')
+        DiMuonShapeCanvas.Print('plots_ul/'+label+'/dimuon/NormalizedDiMuonShape'+channel+'.png')
     print("DiMuon done")
     return DimuonShape
                     
