@@ -11,7 +11,7 @@ class task_handler:
   def __init__(self, file_list=[]):
     self.file_list = file_list 
     #self.script_name = 'Resonant_dummy.py'
-    self.script_name = 'Resonant_Rjpsi_v9.py'
+    self.script_name = 'Resonant_Rjpsi_v10_Pisa.py'
     self.sample_type = 'data'
   def add_file_name(self, file_name):
     self.file_list.append(file_name)
@@ -31,7 +31,7 @@ class task_handler:
     '''
     for fn in self.file_list:
       command = 'python ' + self.script_name + ' --' + self.sample_type + '=' + fn
-      print(command)
+      #print(command)
     
       process = subprocess.Popen(command.split(),  stdout=subprocess.PIPE)
       output, error = process.communicate()
@@ -65,10 +65,22 @@ def main():
     '''
   batch_size=10
 
+  ''' MET Dataset
   sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='MET', date='2022Aug17', job_id='220817_130825', njobs=2940)
   sl2 = storage_list(request_name='data_Run2018B_UL', dataset_name='MET', date='2022Aug17', job_id='220817_130809', njobs=1425)
   sl3 = storage_list(request_name='data_Run2018C_UL', dataset_name='MET', date='2022Aug17', job_id='220817_130834', njobs=1351)
   sl4 = storage_list(request_name='data_Run2018D_UL', dataset_name='MET', date='2022Aug17', job_id='220817_130817', njobs=6284)
+  sl1.save_to_files()
+  sl2.save_to_files()
+  sl3.save_to_files()
+  sl4.save_to_files()
+  '''
+
+  # Charmonium 24Oct2022
+  sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211510', njobs=2923)
+  sl2 = storage_list(request_name='data_Run2018B_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211441', njobs=1414)
+  sl3 = storage_list(request_name='data_Run2018C_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211526', njobs=1332)
+  sl4 = storage_list(request_name='data_Run2018D_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211454', njobs=6570)
 
   sl1.save_to_files()
   sl2.save_to_files()
@@ -76,7 +88,7 @@ def main():
   sl4.save_to_files()
 
   pool = Pool(batch_size)
-  pool.map(pf, sl1.get_file_names())
+  pool.map(pf, sl4.get_file_names())
 
 
 
