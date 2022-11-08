@@ -46,24 +46,8 @@ def pf(file_name):
 
 
 def main():
-  '''
-  handler = task_handler()
-  #handler.set_script_name('Resonant_dummy.py')
-  #handler.set_sample_type('data')
-  handler.add_file_name('test1.txt')
-  handler.add_file_name('test2.txt')
-  handler.add_file_name('test3.txt')
-  #handler.submit_task()
-
-  file_name_prefix = 'test'
-  n_files = 100 
-  file_names = []
-  
-  for n in range(1,n_files+1):
-    file_names.append([file_name_prefix + str(n)+'.txt'])
-  print(file_names)
-    '''
   batch_size=10
+  batch_size_mc=1
 
   ''' MET Dataset
   sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='MET', date='2022Aug17', job_id='220817_130825', njobs=2940)
@@ -76,19 +60,29 @@ def main():
   sl4.save_to_files()
   '''
 
-  # Charmonium 24Oct2022
+
+  ''' Charmonium 24Oct2022
   sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211510', njobs=2923)
   sl2 = storage_list(request_name='data_Run2018B_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211441', njobs=1414)
   sl3 = storage_list(request_name='data_Run2018C_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211526', njobs=1332)
   sl4 = storage_list(request_name='data_Run2018D_UL', dataset_name='Charmonium', date='2022Oct24', job_id='221024_211454', njobs=6570)
+  '''
 
+
+  # Charmonium 7Nov2022
+  sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='Charmonium', date='2022Nov07', job_id='221107_134119', njobs=2923)
+  sl2 = storage_list(request_name='data_Run2018B_UL', dataset_name='Charmonium', date='2022Nov07', job_id='221107_134102', njobs=1414)
+  sl3 = storage_list(request_name='data_Run2018C_UL', dataset_name='Charmonium', date='2022Nov07', job_id='221107_134128', njobs=1332)
+  sl4 = storage_list(request_name='data_Run2018D_UL', dataset_name='Charmonium', date='2022Nov07', job_id='221107_134110', njobs=6570)
   sl1.save_to_files()
   sl2.save_to_files()
   sl3.save_to_files()
   sl4.save_to_files()
+  
+  sl_mc1 = storage_list(request_name='BcToJpsiMuNu', dataset_name='BcToJPsiMuNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', date='2022Nov07', job_id='221107_143314', njobs=153)
 
-  pool = Pool(batch_size)
-  pool.map(pf, sl4.get_file_names())
+  pool = Pool(batch_size_mc)
+  pool.map(pf, sl1.get_file_names())
 
 
 
