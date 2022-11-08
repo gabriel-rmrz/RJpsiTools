@@ -6,8 +6,16 @@ from array import array
 from selections import preselection
 
 def getEffHisto(df, var_name, bins, cuts):
+  c1 = ROOT.TCanvas('c1', '', 800, 800)
   histo_num = df.Filter(cuts[0]).Histo1D((var_name, '', len(bins) -1, array('d',bins)), var_name)
   histo_den = df.Filter(cuts[1]).Histo1D((var_name, '', len(bins) -1, array('d',bins)), var_name)
+
+  histo_num.Draw('e')
+  c1.SaveAs('num_'+var_name+'_histo.pdf')
+
+  histo_den.Draw('e')
+  c1.SaveAs('den_'+var_name+'_histo.pdf')
+
   eff_histo = TEfficiency(histo_num.GetPtr(), histo_den.GetPtr())
 
   eff_histo.SetStatisticOption(TEfficiency.kFCP)
@@ -15,7 +23,7 @@ def getEffHisto(df, var_name, bins, cuts):
   eff_histo.Draw()
   ROOT.gPad.Update()
 
-  eff_histo.GetPaintedGraph().GetYaxis().SetRangeUser(0.8, 1.05)
+  eff_histo.GetPaintedGraph().GetYaxis().SetRangeUser(0.0, 1.05)
   eff_histo.GetPaintedGraph().GetXaxis().SetLabelSize(0.04)
   eff_histo.GetPaintedGraph().GetYaxis().SetLabelSize(0.04)
   eff_histo.GetPaintedGraph().GetXaxis().SetTitleSize(0.04)
@@ -23,6 +31,7 @@ def getEffHisto(df, var_name, bins, cuts):
   eff_histo.GetPaintedGraph().GetXaxis().SetTitleOffset(1.2)
   eff_histo.GetPaintedGraph().GetYaxis().SetTitleOffset(1.2)
   ROOT.gPad.Update()
+  c1.SaveAs('eff_'+var_name+'_histo.pdf')
   return eff_histo
 
 
@@ -50,11 +59,9 @@ def main():
   df = ROOT.RDataFrame("BTo3Mu", "../flatNano/dataframes_2021Oct26_prepared/data_trigger.root")
 
 
-  c1 = ROOT.TCanvas('c1', '', 800, 800)
   
   for var_name, bins in binning.items(): 
     eff_histo = getEffHisto(df, var_name, bins, cuts)
-    c1.SaveAs('eff_'+var_name+'_histo.pdf')
 
 
 if __name__ == '__main__':

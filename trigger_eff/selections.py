@@ -38,10 +38,12 @@ triggerselection = ' & '.join([
 etaselection = '(((((abs(mu1eta)<1) & (abs(mu2eta)>1)) | ((abs(mu1eta)>1) & (abs(mu2eta)<1))) & (abs(jpsivtx_fit_mass-3.0969)<0.07)) | ((abs(mu1eta)<1) & (abs(mu2eta)<1) & (abs(jpsivtx_fit_mass-3.0969)<0.05)) | ((abs(mu1eta)>1) & (abs(mu2eta)>1) & (abs(jpsivtx_fit_mass-3.0969)<0.1)))'
 
 
-preselection = ' & '.join([prepreselection, triggerselection, etaselection, 'Bmass<6.3 & Q_sq>5.5'])
+#preselection = ' & '.join([prepreselection, triggerselection, etaselection, 'Bmass<6.3 & Q_sq>5.5'])
+preselection = ' & '.join([prepreselection, etaselection, 'Bmass<6.3 & Q_sq>5.5'])
 preselection_mc = ' & '.join([preselection, 'abs(k_genpdgId)==13'])
 
-preselection_hm = ' & '.join([prepreselection, triggerselection, etaselection, 'Bmass>6.3'])
+#preselection_hm = ' & '.join([prepreselection, triggerselection, etaselection, 'Bmass>6.3'])
+preselection_hm = ' & '.join([prepreselection,  etaselection, 'Bmass>6.3'])
 preselection_hm_mc = ' & '.join([preselection_hm, 'abs(k_genpdgId)==13'])
 
 
