@@ -81,8 +81,8 @@ def main():
   
   sl_mc1 = storage_list(request_name='BcToJpsiMuNu', dataset_name='BcToJPsiMuNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', date='2022Nov07', job_id='221107_143314', njobs=153)
 
-  pool = Pool(batch_size_mc)
-  pool.map(pf, sl1.get_file_names())
+  pool = Pool(batch_size)
+  pool.map(pf, sl3.get_file_names())
 
 
 

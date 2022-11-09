@@ -69,14 +69,20 @@ for sample in sample_names:
     else:
         path = path_bc + "BcToJPsiMuMu_is_"+sample+"_merged.root"
 
+    print("---- Reading BTo3Mu tree ----")
     df_3Mu = read_root(path,'BTo3Mu',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT ', warn_missing_tree=True)
+    print("---- Reading BTo2MuP tree ----")
     df_2MuP = read_root(path,'BTo2MuP',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT ', warn_missing_tree=True)
+    print("---- Reading BTo2Mu3P tree ----")
     df_2Mu3P = read_root(path,'BTo2Mu3P',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT ', warn_missing_tree=True)
 
     if sample == 'data':
+        print("++++ Writing BTo3Mu tree ++++")
         df_3Mu.to_root(out_dir+'/data_trigger.root', key='BTo3Mu')
-        df_2MuP.to_root(out_dir+'/data_trigger.root', key='BTo2MuP')
-        df_2Mu3P.to_root(out_dir+'/data_trigger.root', key='BTo2Mu3P')
+        print("++++ Writing BTo2MuP tree ++++")
+        df_2MuP.to_root(out_dir+'/data_trigger.root', key='BTo2MuP', mode='a')
+        print("++++ Writing BTo2Mu3P tree ++++")
+        df_2Mu3P.to_root(out_dir+'/data_trigger.root', key='BTo2Mu3P', mode='a')
     else:
         df.to_root(out_dir+'BcToJPsiMuMu_is_'+sample+'trigger.root', key='BTo3Mu')
 
