@@ -5,8 +5,7 @@ from ROOT import TTree, TEfficiency
 from array import array
 from selections import preselection
 
-def getEffHisto(df, var_name, bins, cuts):
-  c1 = ROOT.TCanvas('c1', '', 800, 800)
+def getEffHisto(df, c1, var_name, bins, cuts):
   histo_num = df.Filter(cuts[0]).Histo1D((var_name, '', len(bins) -1, array('d',bins)), var_name)
   histo_den = df.Filter(cuts[1]).Histo1D((var_name, '', len(bins) -1, array('d',bins)), var_name)
 
@@ -31,7 +30,6 @@ def getEffHisto(df, var_name, bins, cuts):
   eff_histo.GetPaintedGraph().GetXaxis().SetTitleOffset(1.2)
   eff_histo.GetPaintedGraph().GetYaxis().SetTitleOffset(1.2)
   ROOT.gPad.Update()
-  c1.SaveAs('eff_'+var_name+'_histo.pdf')
   return eff_histo
 
 
@@ -56,12 +54,18 @@ def main():
       'Bpt': [3.25, 3.5, 3.75, 4.25, 4.5, 4.75, 5.0, 5.25, 5.5, 5.75, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 40.0],
       'Beta': [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4]
       }
-  df = ROOT.RDataFrame("BTo3Mu", "../flatNano/dataframes_2021Oct26_prepared/data_trigger.root")
+
+  ntuples_dir = "../flatNano/dataframes_2021Oct26_prepared/"
+  df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_trigger.root")
+  # df_2MuP = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "data_trigger.root")
+  # df_2Mu3P = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "data_trigger.root")
 
 
   
+  c1 = ROOT.TCanvas('c1', '', 800, 800)
   for var_name, bins in binning.items(): 
-    eff_histo = getEffHisto(df, var_name, bins, cuts)
+    eff_histo = getEffHisto(df_3Mu, c1, var_name, bins, cuts)
+    c1.SaveAs('eff_'+var_name+'_histo.pdf')
 
 
 if __name__ == '__main__':
