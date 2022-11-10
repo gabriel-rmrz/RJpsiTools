@@ -9,14 +9,14 @@ D -> 6508 -> 220707_140602
 
 '''
 class storage_list:
-  def __init__(self, request_name='data_Run2018A_UL', dataset_name='EGamma', date='2022Jul06', job_id='220706_123528', njobs=2923):
+  def __init__(self, request_name='data_Run2018A_UL', dataset_name='EGamma', is_mc = True, date='2022Jul06', job_id='220706_123528', njobs=2923, nfiles_per_job=1):
     self.server_dir = '/gpfs/ddn/srm/cms'
     self.lfn_dir_base = '/store/user/garamire/crab_job_' + date
     self.date = date 
     self.dataset_name=dataset_name
     self.request_name= request_name
     self.job_id = job_id
-    self.nfiles_per_job = 10
+    self.nfiles_per_job = nfiles_per_job 
     self.njobs = njobs
     self.full_dir = self.server_dir + self.lfn_dir_base + '/' +self.dataset_name + '/crab_' + self.request_name + '/' + self.job_id
     self.dir_list = 'list'
@@ -32,7 +32,10 @@ class storage_list:
     file_name = 'list_'+self.dataset_name+'_'+self.request_name
     a_paths = []
     for i in range(1, self.njobs+1):
-      a_paths.append("%s/%s/RJPsi_data_%s_%d.root" % (self.full_dir , (str(i//1000)).zfill(4), self.date, i))
+      file_name_prefix = 'RJPsi_data'
+      if(self.is_mc):
+        file_name_prefix = 'RJPsi_mc'
+      a_paths.append("%s/%s/%s_%s_%d.root" % (self.full_dir , (str(i//1000)).zfill(4), file_name_prefix, self.date, i))
       if (not (i % self.nfiles_per_job) ):
         path = file_name+'_'+str(i//self.nfiles_per_job )
         self.d_paths[path] = a_paths.copy()

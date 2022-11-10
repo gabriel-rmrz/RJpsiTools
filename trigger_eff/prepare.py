@@ -7,7 +7,7 @@ import os
 from root_pandas import read_root
 from root_pandas import to_root
 
-only_data = True
+only_data = True 
 
 wdir = '/home/users/sanchez/RPJpsi/scale_factors/orthogonal/RJpsiTools/flatNano'
 dfdir = 'dataframes_2022Nov07'
@@ -18,10 +18,9 @@ path_bc = wdir + '/' + dfdir
 
 out_dir = wdir + '/' + dfdir + '_prepared' 
 
-sample_names = [
-    'data'     
-]
+# sample_names = ['data']
 
+sample_names = ['jpsi_mu']
 if not only_data:
     sample_names.extend([
         'jpsi_tau' ,
@@ -45,12 +44,9 @@ if not only_data:
     print("#### Clean Hb ########################")
     print("######################################")
     #clean from trigger and from bc
-    df_3Mu_hb = read_root(path_hb,'BTo3Mu',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 |
-        abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree)
-    df_2MuP_hb = read_root(path_hb,'BTo2MuP',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 |
-        abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree)
-    df_2Mu3P_hb = read_root(path_hb,'BTo2Mu3P',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 |
-        abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree)
+    df_3Mu_hb = read_root(path_hb,'BTo3Mu',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree=True)
+    df_2MuP_hb = read_root(path_hb,'BTo2MuP',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree=True)
+    df_2Mu3P_hb = read_root(path_hb,'BTo2Mu3P',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree = True)
     # Save Hb again
     df_3Mu_hb.to_root(out_dir + "HbToJPsiMuMu_trigger_bcclean.root",key = 'BTo3Mu')
     df_2MuP_hb.to_root(out_dir + "HbToJPsiMuMu_trigger_bcclean.root",key = 'BTo2MuP', mode='a')
@@ -61,9 +57,9 @@ if not only_data:
     print("######################################")
     
     #clean from trigger and from bc
-    df_3Mu_hbmu = read_root(path_hb3mu,'BTo3Mu',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree)
-    df_2MuP_hbmu = read_root(path_hb3mu,'BTo2MuP',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree)
-    df_2Mu3P_hbmu = read_root(path_hb3mu,'BTo2Mu3P',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree)
+    df_3Mu_hbmu = read_root(path_hb3mu,'BTo3Mu',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree=True)
+    df_2MuP_hbmu = read_root(path_hb3mu,'BTo2MuP',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree=True)
+    df_2Mu3P_hbmu = read_root(path_hb3mu,'BTo2Mu3P',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree=True)
     
     # Save it again
     df_3Mu_hbmu.to_root(out_dir + "/HbToJPsiMuMu_3MuFilter_trigger_bcclean.root",key = 'BTo3Mu')
@@ -78,7 +74,7 @@ for sample in sample_names:
     if sample == 'data':
         path = path_data 
     else:
-        path = path_bc + "BcToJPsiMuMu_is_"+sample+"_merged.root"
+        path = path_bc + "/BcToJPsiMuMu_is_"+sample+"_merged.root"
 
     print("---- Reading BTo3Mu tree ----")
     df_3Mu = read_root(path,'BTo3Mu',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT ', warn_missing_tree=True)
@@ -95,7 +91,12 @@ for sample in sample_names:
         print("++++ Writing BTo2Mu3P tree ++++")
         df_2Mu3P.to_root(out_dir+'/data_trigger.root', key='BTo2Mu3P', mode='a')
     else:
-        df.to_root(out_dir+'BcToJPsiMuMu_is_'+sample+'trigger.root', key='BTo3Mu')
+        print("++++ Writing BTo3Mu tree ++++")
+        df_3Mu.to_root(out_dir+'/BcToJPsiMuMu_is_'+sample+'_trigger.root', key='BTo3Mu')
+        print("++++ Writing BTo2MuP tree ++++")
+        df_2MuP.to_root(out_dir+'/BcToJPsiMuMu_is_'+sample+'_trigger.root', key='BTo2MuP', mode='a')
+        print("++++ Writing BTo2Mu3P tree ++++")
+        df_2Mu3P.to_root(out_dir+'/BcToJPsiMuMu_is_'+sample+'_trigger.root', key='BTo2Mu3P', mode='a')
 
 
 
