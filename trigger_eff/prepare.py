@@ -10,7 +10,7 @@ from root_pandas import to_root
 only_data = True
 
 wdir = '/home/users/sanchez/RPJpsi/scale_factors/orthogonal/RJpsiTools/flatNano'
-dfdir = 'dataframes_2021Oct26'
+dfdir = 'dataframes_2022Nov07'
 path_hb = wdir + '/' + dfdir + '/HbToJPsiMuMu_ptmax_merged.root'
 path_hb3mu = wdir + '/' + dfdir + '/HbToJPsiMuMu_3MuFilter_ptmax_merged.root'
 path_data = wdir + '/' + dfdir + '/data_ptmax_merged.root'
