@@ -13,6 +13,7 @@ class storage_list:
     self.server_dir = '/gpfs/ddn/srm/cms'
     self.lfn_dir_base = '/store/user/garamire/crab_job_' + date
     self.date = date 
+    self.is_mc = is_mc
     self.dataset_name=dataset_name
     self.request_name= request_name
     self.job_id = job_id

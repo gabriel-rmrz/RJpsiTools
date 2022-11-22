@@ -48,7 +48,6 @@ def pf(file_name):
 def main():
   batch_size=10
 
-  def __init__(self, request_name='data_Run2018A_UL', dataset_name='EGamma', is_mc = True, date='2022Jul06', job_id='220706_123528', njobs=2923, nfiles_per_job=1):
   ''' MET Dataset
   sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='MET', is_mc = False, date='2022Aug17', job_id='220817_130825', njobs=2940, nfiles_per_job=10)
   sl2 = storage_list(request_name='data_Run2018B_UL', dataset_name='MET', is_mc = False, date='2022Aug17', job_id='220817_130809', njobs=1425, nfiles_per_job=10)
@@ -81,11 +80,25 @@ def main():
   sl4.save_to_files()
   '''
   
-  sl_mc1 = storage_list(request_name='BcToJpsiMuNu', dataset_name='BcToJPsiMuNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True date='2022Nov07', job_id='221107_143314', njobs=153, nfiles_per_job=1)
+  sl_mc1 = storage_list(request_name='BcToJpsiMuNu', dataset_name='BcToJPsiMuNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143314', njobs=153, nfiles_per_job=1)
+  sl_mc2 = storage_list(request_name='BcToJpsiTauNu', dataset_name='BcToJPsiTauNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143205', njobs=72, nfiles_per_job=1)
+  sl_mc3 = storage_list(request_name='BcToJPsiMuMu_1', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143719', njobs=299, nfiles_per_job=1)
+  sl_mc4 = storage_list(request_name='BcToJPsiMuMu_2', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143620', njobs=304, nfiles_per_job=1)
+  sl_mc5 = storage_list(request_name='BcToJPsiMuMu_3', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143516', njobs=303, nfiles_per_job=1)
+  sl_mc6 = storage_list(request_name='BuToJpsiK', dataset_name='BuToJpsiK_BMuonFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143816', njobs=437, nfiles_per_job=1)
+  sl_mc7 = storage_list(request_name='HbToJPsiMuMu_3MuFilter', dataset_name='HbToJPsiMuMu_3MuFilter_TuneCP5_13TeV-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143416', njobs=4071, nfiles_per_job=1)
+
+
   sl_mc1.save_to_files()
+  sl_mc2.save_to_files()
+  sl_mc3.save_to_files()
+  sl_mc4.save_to_files()
+  sl_mc5.save_to_files()
+  sl_mc6.save_to_files()
+  sl_mc7.save_to_files()
 
   pool = Pool(batch_size)
-  pool.map(pf, sl_mc1.get_file_names())
+  pool.map(pf, sl_mc7.get_file_names())
 
 
 
