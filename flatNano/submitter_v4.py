@@ -109,7 +109,7 @@ for ijob in range(njobs):
         
     for add, channel in zip(name_add,channels):
         #input file
-        fin = open("Resonant_Rjpsi_v5_crab_splitted_channels.py", "rt")
+        fin = open("Resonant_Rjpsi_v10_crab_splitted_channels.py", "rt")
         #output file to write the result to (name of the jobs+ subjob)
         fout = open("%s/Resonant_Rjpsi_chunk%d%s.py" %(out_dir, ijob, add), "wt")
         #for each line in the input file
