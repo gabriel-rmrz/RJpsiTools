@@ -68,25 +68,23 @@ def main():
   '''
 
 
-  '''
   # Charmonium 7Nov2022
-  sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134119', njobs=2923, nfiles_per_job=10)
-  sl2 = storage_list(request_name='data_Run2018B_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134102', njobs=1414, nfiles_per_job=10)
-  sl3 = storage_list(request_name='data_Run2018C_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134128', njobs=1332, nfiles_per_job=10)
-  sl4 = storage_list(request_name='data_Run2018D_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134110', njobs=6570, nfiles_per_job=10)
+  sl1 = storage_list(request_name='data_Run2018A_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134119', njobs=2923, nfiles_per_job=2923)
+  sl2 = storage_list(request_name='data_Run2018B_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134102', njobs=1414, nfiles_per_job=1414)
+  sl3 = storage_list(request_name='data_Run2018C_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134128', njobs=1332, nfiles_per_job=1332)
+  sl4 = storage_list(request_name='data_Run2018D_UL', dataset_name='Charmonium', is_mc = False, date='2022Nov07', job_id='221107_134110', njobs=6570, nfiles_per_job=6570)
   sl1.save_to_files()
   sl2.save_to_files()
   sl3.save_to_files()
   sl4.save_to_files()
-  '''
   
-  sl_mc1 = storage_list(request_name='BcToJpsiMuNu', dataset_name='BcToJPsiMuNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143314', njobs=153, nfiles_per_job=1)
-  sl_mc2 = storage_list(request_name='BcToJpsiTauNu', dataset_name='BcToJPsiTauNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143205', njobs=72, nfiles_per_job=1)
-  sl_mc3 = storage_list(request_name='BcToJPsiMuMu_1', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143719', njobs=299, nfiles_per_job=1)
-  sl_mc4 = storage_list(request_name='BcToJPsiMuMu_2', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143620', njobs=304, nfiles_per_job=1)
-  sl_mc5 = storage_list(request_name='BcToJPsiMuMu_3', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143516', njobs=303, nfiles_per_job=1)
-  sl_mc6 = storage_list(request_name='BuToJpsiK', dataset_name='BuToJpsiK_BMuonFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143816', njobs=437, nfiles_per_job=1)
-  sl_mc7 = storage_list(request_name='HbToJPsiMuMu_3MuFilter', dataset_name='HbToJPsiMuMu_3MuFilter_TuneCP5_13TeV-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143416', njobs=4071, nfiles_per_job=1)
+  sl_mc1 = storage_list(request_name='BcToJpsiMuNu', dataset_name='BcToJPsiMuNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143314', njobs=153, nfiles_per_job=153)
+  sl_mc2 = storage_list(request_name='BcToJpsiTauNu', dataset_name='BcToJPsiTauNu_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143205', njobs=72, nfiles_per_job=72)
+  sl_mc3 = storage_list(request_name='BcToJPsiMuMu_1', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143719', njobs=299, nfiles_per_job=299)
+  sl_mc4 = storage_list(request_name='BcToJPsiMuMu_2', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143620', njobs=304, nfiles_per_job=304)
+  sl_mc5 = storage_list(request_name='BcToJPsiMuMu_3', dataset_name='BcToJPsiMuMu_inclusive_TuneCP5_13TeV-bcvegpy2-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143516', njobs=303, nfiles_per_job=303)
+  sl_mc6 = storage_list(request_name='BuToJpsiK', dataset_name='BuToJpsiK_BMuonFilter_SoftQCDnonD_TuneCP5_13TeV-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143816', njobs=437, nfiles_per_job=437)
+  sl_mc7 = storage_list(request_name='HbToJPsiMuMu_3MuFilter', dataset_name='HbToJPsiMuMu_3MuFilter_TuneCP5_13TeV-pythia8-evtgen', is_mc = True, date='2022Nov07', job_id='221107_143416', njobs=4071, nfiles_per_job=4071)
 
 
   sl_mc1.save_to_files()
@@ -97,8 +95,8 @@ def main():
   sl_mc6.save_to_files()
   sl_mc7.save_to_files()
 
-  pool = Pool(batch_size)
-  pool.map(pf, sl_mc7.get_file_names())
+  #pool = Pool(batch_size)
+  #pool.map(pf, sl_mc7.get_file_names())
 
 
 

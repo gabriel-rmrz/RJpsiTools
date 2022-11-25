@@ -10,6 +10,7 @@ D -> 6508 -> 220707_140602
 '''
 class storage_list:
   def __init__(self, request_name='data_Run2018A_UL', dataset_name='EGamma', is_mc = True, date='2022Jul06', job_id='220706_123528', njobs=2923, nfiles_per_job=1):
+    #self.server_dir = 'root://cms-xrd-global.cern.ch//'
     self.server_dir = '/gpfs/ddn/srm/cms'
     self.lfn_dir_base = '/store/user/garamire/crab_job_' + date
     self.date = date 

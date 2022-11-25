@@ -7,20 +7,19 @@ import os
 from root_pandas import read_root
 from root_pandas import to_root
 
-only_data = True 
+only_data = False
 
-wdir = '/home/users/sanchez/RPJpsi/scale_factors/orthogonal/RJpsiTools/flatNano'
+wdir = '../flatNano'
 dfdir = 'dataframes_2022Nov07'
 path_hb = wdir + '/' + dfdir + '/HbToJPsiMuMu_ptmax_merged.root'
-path_hb3mu = wdir + '/' + dfdir + '/HbToJPsiMuMu_3MuFilter_ptmax_merged.root'
+path_hb3mu = wdir + '/' + dfdir + '/HbToJPsiMuMu_3MuFilter_merged.root'
 path_data = wdir + '/' + dfdir + '/data_ptmax_merged.root'
 path_bc = wdir + '/' + dfdir 
 
 out_dir = wdir + '/' + dfdir + '_prepared' 
 
-# sample_names = ['data']
+sample_names = ['data']
 
-sample_names = ['jpsi_mu']
 if not only_data:
     sample_names.extend([
         'jpsi_tau' ,
@@ -40,9 +39,11 @@ if not os.path.exists(out_dir):
 
 
 if not only_data:
+    '''
     print("######################################")
     print("#### Clean Hb ########################")
     print("######################################")
+
     #clean from trigger and from bc
     df_3Mu_hb = read_root(path_hb,'BTo3Mu',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree=True)
     df_2MuP_hb = read_root(path_hb,'BTo2MuP',where = 'mu1_isFromDoubleMuT & mu2_isFromDoubleMuT & mu1_isFromJpsi_DoubleMuT & mu2_isFromJpsi_DoubleMuT & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)', warn_missing_tree=True)
@@ -51,6 +52,7 @@ if not only_data:
     df_3Mu_hb.to_root(out_dir + "HbToJPsiMuMu_trigger_bcclean.root",key = 'BTo3Mu')
     df_2MuP_hb.to_root(out_dir + "HbToJPsiMuMu_trigger_bcclean.root",key = 'BTo2MuP', mode='a')
     df_2Mu3P_hb.to_root(out_dir + "HbToJPsiMuMu_trigger_bcclean.root",key = 'BTo2Mu3P', mode='a')
+    '''
 
     print("######################################")
     print("#### Clean Hb 3Mu Filter ############")
@@ -71,6 +73,7 @@ print("#### Clean data and Bc ###############")
 print("######################################")
 
 for sample in sample_names:
+    exit()
     if sample == 'data':
         path = path_data 
     else:
