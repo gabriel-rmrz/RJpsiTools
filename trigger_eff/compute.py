@@ -9,17 +9,32 @@ from copy import copy
 
 def get_efficiency(df, var_name, bins, cuts, is_mc):
   c1 = ROOT.TCanvas('c1', '', 800, 800)
-  histo_num = df.Filter(cuts[0]).Histo1D((var_name, '', len(bins) -1, array('d',bins)), var_name)
-  histo_den = df.Filter(cuts[1]).Histo1D((var_name, '', len(bins) -1, array('d',bins)), var_name)
+  histo_num = df.Filter(cuts[0]).Histo1D((var_name, 'Numerator', len(bins) -1, array('d',bins)), var_name)
+  histo_den = df.Filter(cuts[1]).Histo1D((var_name, 'Denominator', len(bins) -1, array('d',bins)), var_name)
 
+  histo_num.SetLineColor(3)
+  histo_num.SetMarkerColor(3)
+  histo_num.SetMarkerSize(1.0)
+  histo_num.SetLineWidth(2)
+  histo_num.SetMarkerStyle(20)
+  histo_den.SetLineColor(6)
+  histo_den.SetMarkerColor(6)
+  histo_den.SetLineWidth(2)
+  histo_den.SetMarkerSize(1.0)
+  histo_den.SetMarkerStyle(20)
   sufix= ".png"
   if(is_mc):
     sufix= "_mc.png"
 
   histo_num.Draw('e')
+  gPad.BuildLegend(0.68,0.795,0.980,0.935,"","f")
   c1.SaveAs('plots/num_'+var_name+sufix)
   histo_den.Draw('e')
+  gPad.BuildLegend(0.68,0.795,0.980,0.935,"","f")
   c1.SaveAs('plots/den_'+var_name+sufix)
+  histo_num.Draw('e same')
+  gPad.BuildLegend(0.68,0.745,0.980,0.935,"","f")
+  c1.SaveAs('plots/both_'+var_name+sufix)
 
   eff = TEfficiency(histo_num.GetValue(), histo_den.GetValue())
 
@@ -87,7 +102,8 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
   eff_ratio_den.Multiply( eff_den, eff_mc_num )
 
 
-  eff_ratio.Divide(eff_ratio_num, eff_ratio_den,1.,1., "cl=0.683 b(1,1) mode")
+  #eff_ratio.Divide(eff_ratio_num, eff_ratio_den,1.,1., "cl=0.683 b(1,1) mode")
+  eff_ratio.Divide(eff_ratio_num, eff_ratio_den,1.,1.)
 
   '''
   for i in range(len(bins) -1):
@@ -151,6 +167,10 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
   eff_ratio.GetXaxis().SetTitleSize(0.13)
   eff_ratio.GetXaxis().SetTitleOffset(0.8)
   eff_ratio.GetYaxis().SetRangeUser(0.6, 1.2)
+  eff_ratio.SetLineColor(8)
+  eff_ratio.SetMarkerColor(8)
+  eff_ratio.SetMarkerSize(0.5)
+  eff_ratio.SetMarkerStyle(20)
   loPad.Modified()
   loPad.Update()
   c2.Update()
@@ -182,7 +202,7 @@ def main():
       'mu2pt': [5.0, 5.25, 5.5, 5.75, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 40.0],
       'Bpt': [5.0, 5.25, 5.5, 5.75, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 40.0],
       'kpt': [5.0, 5.25, 5.5, 5.75, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 40.0],
-      'jpsi_pt': [ 10.0, 12.0, 15.0, 20.0, 30.0, 40.0],
+      'jpsi_pt': [6.0, 8.0, 10.0, 12.0, 15.0, 20.0, 30.0, 40.0],
       'mu1eta': [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4],
       'mu2eta': [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4],
       'Beta': [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4],
@@ -200,7 +220,8 @@ def main():
   #df_2MuP = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "data_trigger.root")
   #df_2Mu3P = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
 
-  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
+  #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
+  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_3MuFilter_trigger_bcclean.root")
   #df_2MuP_mc = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   #df_2Mu3P_mc = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   
