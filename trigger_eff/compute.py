@@ -9,6 +9,7 @@ from copy import copy
 
 def get_efficiency(df, var_name, bins, cuts, is_mc):
   c1 = ROOT.TCanvas('c1', '', 800, 800)
+  print(" cuts [0]:", cuts[0], ", cuts[1] :", cuts[1])
   histo_num = df.Filter(cuts[0]).Histo1D((var_name, 'Numerator', len(bins) -1, array('d',bins)), var_name)
   histo_den = df.Filter(cuts[1]).Histo1D((var_name, 'Denominator', len(bins) -1, array('d',bins)), var_name)
 
@@ -22,9 +23,11 @@ def get_efficiency(df, var_name, bins, cuts, is_mc):
   histo_den.SetLineWidth(2)
   histo_den.SetMarkerSize(1.0)
   histo_den.SetMarkerStyle(20)
+
   sufix= ".png"
   if(is_mc):
     sufix= "_mc.png"
+
 
   histo_num.Draw('e')
   gPad.BuildLegend(0.68,0.795,0.980,0.935,"","f")
@@ -181,16 +184,16 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
 
 def main():
 
-  trigger_sel_3Mu = ' & '.join([
+  trigger_sel_3Mu = ' && '.join([
     'mu1_isFromMuT > 0.5',
     'mu2_isFromMuT>0.5', 
     'k_isFromMuT>0.5'
   ])
-  num_selection_3Mu = ' & '.join([
-      trigger_sel_3Mu,
-      preselection
+  num_selection_3Mu = ' && '.join([
+      preselection,
+      trigger_sel_3Mu
       ])
-  
+  #num_selection_3Mu = preselection 
   cuts_3Mu = [num_selection_3Mu, preselection]
   
   bins_pt = [5.0, 5.25, 5.5, 5.75, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 40.0]
@@ -215,21 +218,23 @@ def main():
       'jpsi_phi': [-3.3, -3.0, -2.7,  -2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4, 2.7, 3.0, 3.3]
       }
 
-  ntuples_dir = "../flatNano/dataframes_2022Nov07_prepared/"
+  ntuples_dir = "../forCamilla/dataframes_2022Nov07_prepared/"
   df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_trigger.root")
   #df_2MuP = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "data_trigger.root")
   #df_2Mu3P = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
 
-  #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
-  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_3MuFilter_trigger_bcclean.root")
+  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
+  #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_3MuFilter_trigger_bcclean.root")
   #df_2MuP_mc = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   #df_2Mu3P_mc = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   
   for var_name, bins in binning.items(): 
     eff = get_efficiency(df_3Mu, var_name, bins, cuts_3Mu, is_mc = False)
+    print("first eff on data for var:", var_name)
     eff_mc = get_efficiency(df_3Mu_mc, var_name, bins, cuts_3Mu,is_mc = True)
+    print("first eff on mc for var:", var_name)
     plot_efficiencies(eff, eff_mc, var_name, bins)
-
+    print("eff plotted:", var_name)
 if __name__ == '__main__':
   ROOT.gROOT.SetBatch()
   ROOT.TH1.SetDefaultSumw2()

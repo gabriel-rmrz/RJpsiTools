@@ -18,12 +18,12 @@ import sys
 
 nanotools = True
 
-tier_access_path = 'srm://storage01.lcg.cscs.ch:8443/srm/managerv2?SFN=/pnfs/lcg.cscs.ch/cms/trivcat/store/user/friti' #CSCS
+tier_access_path = 'srm://storage01.lcg.cscs.ch:8443/srm/managerv2?SFN=/pnfs/lcg.cscs.ch/cms/trivcat/store/user/cgalloni' #CSCS
 #tier_access_path = 'root://t3dcachedb03.psi.ch:1094//pnfs/psi.ch/cms/trivcat/store/user/friti' #PSI
 
-personal_rjpsi_path = '/work/friti/rjpsi/CMSSW_10_6_14/src/PhysicsTools/RJPsiNano/'
-username = 'friti'
-jobs_date = '2021Mar16'
+personal_rjpsi_path = '/work/cgalloni/Rjpsi_analysis/CMSSW_10_6_14/src/PhysicsTools/RJPsiNano/'
+username = 'cgalloni'
+jobs_date = '2023Jan11'
 
 crab_path = personal_rjpsi_path + 'production/RJPsiNANO_'+jobs_date
 

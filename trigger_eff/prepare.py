@@ -9,7 +9,12 @@ from root_pandas import to_root
 
 only_data = False
 
-wdir = '../flatNano'
+
+#wdir = '../flatNano'
+
+#wdir = '/home/users/sanchez/RPJpsi/scale_factors/orthogonal/RJpsiTools/flatNano'
+wdir = '/work/cgalloni/Rjpsi_analysis/CMSSW_10_6_14/src/PhysicsTools/RJPsiTools/forCamilla/'
+
 dfdir = 'dataframes_2022Nov07'
 path_hb = wdir + '/' + dfdir + '/HbToJPsiMuMu_ptmax_merged.root'
 path_hb3mu = wdir + '/' + dfdir + '/HbToJPsiMuMu_3MuFilter_merged.root'
@@ -18,7 +23,8 @@ path_bc = wdir + '/' + dfdir
 
 out_dir = wdir + '/' + dfdir + '_prepared' 
 
-sample_names = ['data']
+
+sample_names = ['jpsi_mu','data','jpsi_tau']
 
 if not only_data:
     sample_names.extend([
@@ -73,7 +79,7 @@ print("#### Clean data and Bc ###############")
 print("######################################")
 
 for sample in sample_names:
-    exit()
+    #exit()
     if sample == 'data':
         path = path_data 
     else:

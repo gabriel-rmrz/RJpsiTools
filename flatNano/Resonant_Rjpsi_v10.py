@@ -799,6 +799,9 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
             # very loose selection here
             b_selection = ((bcands.p4.mass < 10 ) & (bcands.bodies3_svprob > 1e-7))
             x_selection= (bcands.p4.pt > -99)
+            #pions_selection= 1 
+            #if(channel == 'BTo2Mu3P'):
+            #    pions_selection= bcands.pi1.
 
             #Delete the signal from the JpsiX MC
             if (dataset==args.mc_onia or dataset==args.mc_hb):
