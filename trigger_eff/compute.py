@@ -9,7 +9,9 @@ from copy import copy
 
 def get_efficiency(df, var_name, bins, cuts, is_mc):
   c1 = ROOT.TCanvas('c1', '', 800, 800)
-  histo_num = df.Filter(cuts[0]).Histo1D((var_name, 'Numerator', len(bins) -1, array('d',bins)), var_name)
+
+  df = df.Define("weight","(float)0.5")
+  histo_num = df.Filter(cuts[0]).Histo1D((var_name, 'Numerator', len(bins) -1, array('d',bins)), var_name, 'weight')
   histo_den = df.Filter(cuts[1]).Histo1D((var_name, 'Denominator', len(bins) -1, array('d',bins)), var_name)
 
   histo_num.SetLineColor(3)
