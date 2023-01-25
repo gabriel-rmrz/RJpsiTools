@@ -41,8 +41,8 @@ from hammer import hepmc, pdg
 maxEvents = -1
 checkDoubles = True
 
-nMaxFiles = 20
-skipFiles = 0
+nMaxFiles = REPLACE_MAX_FILES
+skipFiles = REPLACE_SKIP_FILES
 
 #Compute hammer
 flag_hammer_mu  = False
@@ -500,7 +500,9 @@ def HighMassLowMassDivision(df):
 #######################################################################################
 
 nprocessedAll = 0
-channels = ['BTo3Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']
+channels = REPLACE_CHANNELS
+
+#channels = ['BTo3Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']
 
 #loop on input datasets
 for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_onia,args.mc_gen]: 
@@ -855,7 +857,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                 if(dataset == args.mc_bc):
                     print("Processing name",name)
                     print( "channel ", channel)
-                    print( "selection ", selection)
+                    #print( "selection ", selection)
                 if channel == 'BTo2Mu3P':
                     #for i in bcands:
                     #    print ("tau_fitted_pt no selection cand ", i.tau_fitted_pt)
@@ -910,7 +912,10 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                     df['nMuon'] = tab.nMuon
                     df['bvtx_chi2'] = tab.bodies3_chi2
                     df['bvtx_svprob'] = tab.bodies3_svprob
+                    den_is_zero= (tab.bodies3_l_xy_unc==0)
+                    tab.bodies3_l_xy_unc[den_is_zero]=1
                     df['bvtx_lxy_sig'] = (tab.bodies3_l_xy / tab.bodies3_l_xy_unc)
+                    df.loc[den_is_zero, 'bvtx_lxy_sig'] = -99
                     df['bvtx_lxy'] = tab.bodies3_l_xy
                     df['bvtx_lxy_unc'] = tab.bodies3_l_xy_unc
                     df['bvtx_vtx_x'] = tab.bodies3_vtx_x
@@ -1878,18 +1883,18 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
     dataset=dataset.strip('.txt')
     name=dataset.split('/')
     d=name[len(name)-1].split('_')
-    adj='_v10_'
+    adj=''
   
     for flag in flag_names:
         for channel in channels:
             if channel == 'BTo3Mu':
-                final_dfs_mmm[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel)
+                final_dfs_mmm[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+adj+'.root', key=channel)
             elif (channel == 'BTo2MuP'):
-                final_dfs_pmm[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel, mode = 'a')
+                final_dfs_pmm[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+adj+'.root', key=channel, mode = 'a')
             elif (channel == 'BTo2MuK'):
-                final_dfs_kmm[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel, mode = 'a')
+                final_dfs_kmm[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+adj+'.root', key=channel, mode = 'a')
             elif (channel == 'BTo2Mu3P'):
-                final_dfs_2m3p[flag].to_root('dataframes_local/'+d[0]+'_'+flag+adj+'.root', key=channel, mode = 'a')
-        print("Saved file dataframes_local/"+ d[0]+'_'+flag+adj+'.root')
+                final_dfs_2m3p[flag].to_root('REPLACE_FILE_OUT'+'_'+flag+adj+'.root', key=channel, mode = 'a')
+        print("Saved file"+ 'REPLACE_FILE_OUT'+'_'+flag+adj+'.root')
 
 print('DONE! Processed events: ', nprocessedAll)

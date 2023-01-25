@@ -7,10 +7,11 @@ import ROOT
 import math
 from root_pandas import to_root, read_root
 
-path_or = personal_tier_path+'dataframes_2021Oct22/'
+path_or = personal_tier_path+'dataframes_2023Jan23/'
 
 #dataset = 'HbToJPsiMuMu_3MuFilter/'
 dataset = 'BcToJPsiMuMu/'
+#dataset ='data/'
 
 if not ("BcToJPsiMuMu") in dataset:
     flag_names = ['ptmax']
@@ -40,5 +41,5 @@ for flag in flag_names:
                 first_file = file
                 break
     os.system('mv '+ path + dataset + flag + '/' +first_file+' '+path + dataset+'.')
-    os.system('hadd '+ path + dataset.strip('/') + '_'+flag + '_merged_v5.root '+path + dataset+ first_file +' '+path + dataset + flag + '/*')        
-    os.system('mv '+ path + dataset +  '/' +first_file+' '+path + dataset+flag +'/.')
+    os.system('hadd -k -n 20 '+ path + dataset.strip('/') + '_'+flag + '_merged_v11.root '+path + dataset+ first_file +' '+path + dataset + flag + '/*')        
+    os.system('mv '+ path + dataset +  '/' +first_file+' '+path + dataset+flag + '/.')

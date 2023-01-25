@@ -15,21 +15,23 @@ from personal_settings import *
 
 # nanoaod datasets names and the corresponding files
 dataset_dict = {
-    'data':                  ['--data '+personal_tools_path+'/txt_files/data_files_path_2021Sep30.txt'],
-    'BcToJPsiMuMu':          ['--mc_bc '+personal_tools_path+'/txt_files/BcToJPsiMuMu_files_path_2021Sep21.txt'],
+    'data':                  ['--data '+personal_tools_path+'/txt_files/data_files_path.txt'],
+    'BcToJPsiMuMu':          ['--mc_bc '+personal_tools_path+'/txt_files/BcToJPsiMuMu_files_path.txt'],
     'BcToJpsiTauNu':         ['--mc_tau '+personal_tools_path+'/txt_files/BcToJpsiTauNu_files_path_2021Sep21.txt'],
-    'HbToJPsiMuMu':          ['--mc_hb '+personal_tools_path+'/txt_files/HbToJPsiMuMu_files_path_2021Sep21.txt'],
+    'HbToJPsiMuMu':          ['--mc_hb '+personal_tools_path+'/txt_files/HbToJPsiMuMu_files_path.txt'],
     'HbToJPsiMuMu_3MuFilter':['--mc_hb '+personal_tools_path+'/txt_files/HbToJPsiMuMu_3MuFilter_files_path_2021Sep21.txt'],
     'BuToJpsiK':             ['--mc_hb '+personal_tools_path+'/txt_files/BuToJpsiK_files_path_2021Dec08.txt'],
 }
 
-dataset = 'BuToJpsiK'
+#dataset = 'data'
+#dataset='BcToJPsiMuMu'
+dataset='HbToJPsiMuMu'
 dataset_opt = dataset_dict[dataset][0]
 
 file_name = dataset_opt.split(' ')[1]
 count_files = len(open(file_name).readlines(  ))
 
-files_per_job = 25
+files_per_job = 1 #30
 njobs = count_files//files_per_job + 1  
 
 print("Submitting %s jobs" %(njobs))
@@ -109,7 +111,7 @@ for ijob in range(njobs):
         
     for add, channel in zip(name_add,channels):
         #input file
-        fin = open("Resonant_Rjpsi_v10_crab_splitted_channels.py", "rt")
+        fin = open("Resonant_Rjpsi_v11_crab_splitted_channels.py", "rt")
         #output file to write the result to (name of the jobs+ subjob)
         fout = open("%s/Resonant_Rjpsi_chunk%d%s.py" %(out_dir, ijob, add), "wt")
         #for each line in the input file
@@ -117,7 +119,7 @@ for ijob in range(njobs):
             #read replace the string and write to output file
             if   'REPLACE_MAX_FILES' in line: fout.write(line.replace('REPLACE_MAX_FILES' , '%s' %files_per_job))
             elif 'REPLACE_CHANNELS'   in line: fout.write(line.replace('REPLACE_CHANNELS'   , '%s' %channel))
-            elif 'REPLACE_FILE_OUT'   in line: fout.write(line.replace('REPLACE_FILE_OUT'   , '/scratch/friti/%s/%s_UL_%d%s' %(dataset, dataset,ijob,add)))
+            elif 'REPLACE_FILE_OUT'   in line: fout.write(line.replace('REPLACE_FILE_OUT'   , '/scratch/cgalloni/%s/%s_UL_%d%s' %(dataset, dataset,ijob,add)))
             elif 'REPLACE_SKIP_FILES'in line: fout.write(line.replace('REPLACE_SKIP_FILES', '%d' %(files_per_job*ijob)))
             else: fout.write(line)
         #close input and output files
