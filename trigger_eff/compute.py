@@ -160,7 +160,7 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
   eff_ratio.Draw('e')
   loPad.Update()
   #print(eff_ratio.GetYaxis().GetTitleSize())
-  print(eff_ratio.GetYaxis().GetLabelSize())
+  #print(eff_ratio.GetYaxis().GetLabelSize())
   eff_ratio.GetYaxis().SetLabelSize(0.1)
   eff_ratio.GetYaxis().SetTitleSize(0.13)
   eff_ratio.GetYaxis().SetTitleOffset(0.4)
@@ -182,18 +182,39 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
 
 
 def main():
-
   trigger_sel_3Mu = ' & '.join([
     'mu1_isFromMuT > 0.5',
     'mu2_isFromMuT>0.5', 
     'k_isFromMuT>0.5'
   ])
+  #ref_trigger_sel = 'mu1_isDimuon0_jpsi_Trg & mu2_isDimuon0_jpsi_Trg & HLT_Dimuon0_Jpsi_NoVertexing '
+  #ref_trigger_sel = 'mu1_isDimuon0_jpsi_Trg & mu2_isDimuon0_jpsi_Trg '
+  ref_trigger_sel = ' HLT_Dimuon0_Jpsi_NoVertexing '
+
+  preselection_data = ' & '.join([
+    #preselection,
+    ref_trigger_sel
+    ])
+  
   num_selection_3Mu = ' & '.join([
       trigger_sel_3Mu,
-      preselection
+      preselection_data
       ])
   
-  cuts_3Mu = [num_selection_3Mu, preselection]
+  cuts_3Mu_data = [num_selection_3Mu, preselection_data]
+  
+
+  ref_trigger_sel_mc = ref_trigger_sel + ' & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)'
+  preselection_mc = ' & '.join([
+    #preselection,
+    ref_trigger_sel_mc
+    ])
+  num_selection_3Mu = ' & '.join([
+      trigger_sel_3Mu,
+      preselection_mc
+      ])
+  
+  cuts_3Mu_mc = [num_selection_3Mu, preselection_mc]
   
   bins_pt = [5.0, 5.25, 5.5, 5.75, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 40.0]
   bins_eta = [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4] 
@@ -217,19 +238,19 @@ def main():
       'jpsi_phi': [-3.3, -3.0, -2.7,  -2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4, 2.7, 3.0, 3.3]
       }
 
-  ntuples_dir = "../flatNano/dataframes_2022Nov07_prepared/"
-  df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_trigger.root")
+  ntuples_dir = "../flatNano/dataframes_2023Jan25/"
+  df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_merged_v11.root")
   #df_2MuP = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "data_trigger.root")
   #df_2Mu3P = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
 
   #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
-  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_3MuFilter_trigger_bcclean.root")
+  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_merged_v11.root")
   #df_2MuP_mc = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   #df_2Mu3P_mc = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   
   for var_name, bins in binning.items(): 
-    eff = get_efficiency(df_3Mu, var_name, bins, cuts_3Mu, is_mc = False)
-    eff_mc = get_efficiency(df_3Mu_mc, var_name, bins, cuts_3Mu,is_mc = True)
+    eff = get_efficiency(df_3Mu, var_name, bins, cuts_3Mu_data, is_mc = False)
+    eff_mc = get_efficiency(df_3Mu_mc, var_name, bins, cuts_3Mu_mc,is_mc = True)
     plot_efficiencies(eff, eff_mc, var_name, bins)
 
 if __name__ == '__main__':
