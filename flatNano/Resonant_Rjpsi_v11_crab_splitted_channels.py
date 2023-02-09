@@ -813,6 +813,8 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
             x_selection= (bcands.p4.pt > -99)
             pions_selection= True 
             tau_selection= True
+            trigger_selection = True
+            trigger_selection = ((bcands.mu1.isDimuon0_jpsi_Trg==True)  & (bcands.mu2.isDimuon0_jpsi_Trg==True))
             if(channel == 'BTo2Mu3P'):
                 pions_selection = ((bcands.ip3D_pvjpsi_pi1 >-0.4) & (bcands.ip3D_pvjpsi_pi1 <0.6) & (bcands.ip3D_pvjpsi_pi2 >-0.4) & (bcands.ip3D_pvjpsi_pi2 <0.6) & (bcands.ip3D_pvjpsi_pi3 >-0.4) & (bcands.ip3D_pvjpsi_pi3 <0.6))
                 tau_selection = ((bcands.tau_vprob >0.1) & (bcands.tau_fls3d >3))
@@ -863,13 +865,13 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                     #    print ("tau_fitted_pt no selection cand ", i.tau_fitted_pt)
  
                     #print ("tau_fitted_pt cand ", bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].tau_fitted_pt)
-                    tau_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].tau_fitted_pt
-                    tau_cand_pt_idx =  bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].tau_fitted_pt.argmax() #tau with higher pt 
+                    tau_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection  ].tau_fitted_pt
+                    tau_cand_pt_idx =  bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection  ].tau_fitted_pt.argmax() #tau with higher pt 
                     #for i, j in zip(tau_cand_pt, tau_cand_pt_idx):
                     #    if (len(i) != 0):
                     #        print(i, j)
                     #print ("tau_cand_pt_idx ", tau_cand_pt_idx )
-                    indx = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ][tau_cand_pt_idx].p4.pt.argmax() #B with higher pt
+                    indx = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection ][tau_cand_pt_idx].p4.pt.argmax() #B with higher pt
                     #best_pf_cand_tau_pt_idx = tau_cand_pt_idx[indx]
                     best_pf_cand_pt = tau_cand_pt_idx[indx]
                     #cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt 
@@ -883,13 +885,13 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                     #        print(i, j,k,l)
 
                 else:
-                    best_pf_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt.argmax() #B with higher pt
+                    best_pf_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection ].p4.pt.argmax() #B with higher pt
                     #if channel == 'BTo3Mu':   
                     #    for i, j, k, l  in zip( bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt, bcands['nMuon'],bcands['mu1Idx'],bcands['mu2Idx']):
                     #        if (len(i) != 0):
                     #            print(i, j,k,l)
   
-                bcands_flag = (bcands[b_selection & x_selection & selection & pions_selection & tau_selection][best_pf_cand_pt]).flatten()
+                bcands_flag = (bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection ][best_pf_cand_pt]).flatten()
 
                 
                 ###########################################################################
@@ -897,7 +899,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                 ###########################################################################
                 dfs = {}            
                 for chan, tab, sel in [
-                        (channel, bcands_flag, b_selection & x_selection & selection & pions_selection & tau_selection), 
+                        (channel, bcands_flag, b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection ), 
                 ]:
                     dfs[name] = pd.DataFrame()
                     df = dfs[name]

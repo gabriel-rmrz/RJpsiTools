@@ -811,6 +811,12 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
             x_selection= (bcands.p4.pt > -99)
             pions_selection= True 
             tau_selection= True
+            trigger_selection = True
+            #print (bcands['mu1Idx'])
+            #print (bcands.mu1.isDimuon0_jpsi_Trg)
+            trigger_selection = ((bcands.mu1.isDimuon0_jpsi_Trg==True)  & (bcands.mu2.isDimuon0_jpsi_Trg==True))
+            #print ("trigger selection ",trigger_selection)
+
             if(channel == 'BTo2Mu3P'):
                 pions_selection = ((bcands.ip3D_pvjpsi_pi1 >-0.4) & (bcands.ip3D_pvjpsi_pi1 <0.6) & (bcands.ip3D_pvjpsi_pi2 >-0.4) & (bcands.ip3D_pvjpsi_pi2 <0.6) & (bcands.ip3D_pvjpsi_pi3 >-0.4) & (bcands.ip3D_pvjpsi_pi3 <0.6))
                 tau_selection = ((bcands.tau_vprob >0.1) & (bcands.tau_fls3d >3))
@@ -861,33 +867,33 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                     #    print ("tau_fitted_pt no selection cand ", i.tau_fitted_pt)
  
                     #print ("tau_fitted_pt cand ", bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].tau_fitted_pt)
-                    tau_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].tau_fitted_pt
-                    tau_cand_pt_idx =  bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].tau_fitted_pt.argmax() #tau with higher pt 
+                    tau_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection].tau_fitted_pt
+                    tau_cand_pt_idx =  bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection ].tau_fitted_pt.argmax() #tau with higher pt 
                     #for i, j in zip(tau_cand_pt, tau_cand_pt_idx):
                     #    if (len(i) != 0):
                     #        print(i, j)
                     #print ("tau_cand_pt_idx ", tau_cand_pt_idx )
-                    indx = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ][tau_cand_pt_idx].p4.pt.argmax() #B with higher pt
-                    #best_pf_cand_tau_pt_idx = tau_cand_pt_idx[indx]
-                    best_pf_cand_pt = tau_cand_pt_idx[indx]
-                    #cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt 
-                    #best_pf_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt.argmax()
-                    #for i, j, k, l ,m,n,o,p in zip(tau_cand_pt, tau_cand_pt_idx,cand_pt,best_pf_cand_pt,best_pf_cand_tau_pt_idx, bcands['nMuon'],bcands['mu1Idx'],bcands['mu2Idx']):
-                    #    if (len(i) != 0):
-                    #        print(i, j,k,l,m,n,o,p) 
+                    indx = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection ][tau_cand_pt_idx].p4.pt.argmax() #B with higher pt
+                    best_pf_cand_tau_pt_idx = tau_cand_pt_idx[indx]
+                    #best_pf_cand_pt = tau_cand_pt_idx[indx]
+                    cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection ].p4.pt 
+                    best_pf_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection].p4.pt.argmax()
+                    for i, j, k, l ,m,n,o ,p,q,r,s,t,u,v in zip(tau_cand_pt, tau_cand_pt_idx,best_pf_cand_pt,cand_pt,best_pf_cand_tau_pt_idx, bcands['nMuon'],bcands['mu1Idx'],bcands['mu2Idx'],bcands.mu1.isMuonFromJpsi_dimuon0Trg,bcands.mu1.isMuonFromJpsi_jpsiTrkTrg, bcands.mu1.isDimuon0_jpsi_Trg, bcands.mu2.isMuonFromJpsi_dimuon0Trg,bcands.mu2.isMuonFromJpsi_jpsiTrkTrg, bcands.mu2.isDimuon0_jpsi_Trg):
+                        if (len(i) != 0 and len(np.unique(np.array(o)))>1):
+                            print("2Mu3Pi :",i, j,k,l,m,n,o,p,q,r,s,t,u,v) 
                     
                     #for i, j, k, l  in zip( bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt, bcands['nMuon'],bcands['mu1Idx'],bcands['mu2Idx']):
                     #    if (len(i) != 0):
                     #        print(i, j,k,l)
 
                 else:
-                    best_pf_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt.argmax() #B with higher pt
-                    #if channel == 'BTo3Mu':   
-                    #    for i, j, k, l  in zip( bcands[b_selection & x_selection & selection & pions_selection & tau_selection ].p4.pt, bcands['nMuon'],bcands['mu1Idx'],bcands['mu2Idx']):
-                    #        if (len(i) != 0):
-                    #            print(i, j,k,l)
+                    best_pf_cand_pt = bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection].p4.pt.argmax() #B with higher pt
+                    if channel == 'BTo3Mu':   
+                        for i, j, k, l ,m,n,o,p,q,r  in zip( bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection].p4.pt, bcands['nMuon'],bcands['mu1Idx'],bcands['mu2Idx'],bcands.mu1.isMuonFromJpsi_dimuon0Trg,bcands.mu1.isMuonFromJpsi_jpsiTrkTrg,bcands.mu1.isDimuon0_jpsi_Trg, bcands.mu2.isMuonFromJpsi_dimuon0Trg,bcands.mu2.isMuonFromJpsi_jpsiTrkTrg, bcands.mu2.isDimuon0_jpsi_Trg):
+                            if (len(i) != 0 and  len(np.unique(np.array(k)))>1):
+                                print("3Mu:" ,i, j,k,l,m,n,o,p,q,r )
   
-                bcands_flag = (bcands[b_selection & x_selection & selection & pions_selection & tau_selection][best_pf_cand_pt]).flatten()
+                bcands_flag = (bcands[b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection][best_pf_cand_pt]).flatten()
 
                 
                 ###########################################################################
@@ -895,7 +901,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                 ###########################################################################
                 dfs = {}            
                 for chan, tab, sel in [
-                        (channel, bcands_flag, b_selection & x_selection & selection & pions_selection & tau_selection), 
+                        (channel, bcands_flag, b_selection & x_selection & selection & pions_selection & tau_selection & trigger_selection), 
                 ]:
                     dfs[name] = pd.DataFrame()
                     df = dfs[name]
@@ -1075,7 +1081,7 @@ for dataset in [args.data,args.mc_mu,args.mc_tau,args.mc_bc,args.mc_hb,args.mc_o
                         df['othermu_softmvaId'] = tab.othermu_softmvaId
                         '''
 
-                    #trigger of the muon
+                    #triqgger of the muon
 
                     df['HLT_DoubleMu4_JpsiTrk_Displaced'] = tab.hlt.DoubleMu4_JpsiTrk_Displaced
                     df['HLT_Dimuon0_Jpsi3p5_Muon2'] = tab.hlt.Dimuon0_Jpsi3p5_Muon2
