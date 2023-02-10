@@ -189,10 +189,10 @@ def main():
   ])
   #ref_trigger_sel = 'mu1_isDimuon0_jpsi_Trg & mu2_isDimuon0_jpsi_Trg & HLT_Dimuon0_Jpsi_NoVertexing '
   #ref_trigger_sel = 'mu1_isDimuon0_jpsi_Trg & mu2_isDimuon0_jpsi_Trg '
-  ref_trigger_sel = ' HLT_Dimuon0_Jpsi_NoVertexing '
+  ref_trigger_sel = ' HLT_Dimuon0_Jpsi_NoVertexing > 0.5 '
 
   preselection_data = ' & '.join([
-    #preselection,
+    preselection,
     ref_trigger_sel
     ])
   
@@ -206,7 +206,7 @@ def main():
 
   ref_trigger_sel_mc = ref_trigger_sel + ' & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)'
   preselection_mc = ' & '.join([
-    #preselection,
+    preselection,
     ref_trigger_sel_mc
     ])
   num_selection_3Mu = ' & '.join([
@@ -238,13 +238,17 @@ def main():
       'jpsi_phi': [-3.3, -3.0, -2.7,  -2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4, 2.7, 3.0, 3.3]
       }
 
-  ntuples_dir = "../flatNano/dataframes_2023Jan25/"
-  df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_merged_v11.root")
+  ntuples_dir = "../flatNano/3Mu_only_10Feb/"
+  #df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_merged_v11.root")
+  df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data__merged_v11.root")
+
   #df_2MuP = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "data_trigger.root")
   #df_2Mu3P = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
 
+  #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_merged_v11.root")
+  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_merged_v11.root")
+
   #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
-  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_merged_v11.root")
   #df_2MuP_mc = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   #df_2Mu3P_mc = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   
