@@ -31,7 +31,7 @@ dataset_opt = dataset_dict[dataset][0]
 file_name = dataset_opt.split(' ')[1]
 count_files = len(open(file_name).readlines(  ))
 
-files_per_job = 1 #30
+files_per_job = 2
 njobs = count_files//files_per_job + 1  
 
 print("Submitting %s jobs" %(njobs))
@@ -99,13 +99,15 @@ if ((("BcToXToJpsi") in dataset) or (("BcToJPsiMuMu") in dataset) ):
 for ijob in range(njobs):
     
     if ((not ("BcToXToJpsi") in dataset) and (not ("BcToJPsiMuMu") in dataset) ):
-        channels = [['BTo3Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']]
+        #channels = [['BTo3Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']]
+        channels = [['BTo3Mu']]
         name_add = ['']
         samples = ['ptmax']
 
     else:
         # in case of Bc sample, for unknown reasons, we need to split the channels because otherwise the jobs fail
-        channels = [['BTo3Mu'],['BTo2MuP','BTo2MuK','BTo2Mu3P']]
+        #channels = [['BTo3Mu'],['BTo2MuP','BTo2MuK','BTo2Mu3P']]
+        channels = [['BTo3Mu']]
         name_add = ['_3m','_others']
         samples = bc_samples
         

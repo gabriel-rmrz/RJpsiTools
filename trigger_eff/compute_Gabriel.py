@@ -5,12 +5,15 @@ from ROOT import TTree, TEfficiency, TH1D, gPad, TPad, TAxis
 from array import array
 from selections import preselection
 from copy import copy
+ 
 
+outdir  = "plots_dimoun0_no_verﬁtex"
 
 def get_efficiency(df, var_name, bins, cuts, is_mc):
   c1 = ROOT.TCanvas('c1', '', 800, 800)
-  print(" cuts [0]:", cuts[0], ", cuts[1] :", cuts[1])
-  histo_num = df.Filter(cuts[0]).Histo1D((var_name, 'Numerator', len(bins) -1, array('d',bins)), var_name)
+
+  df = df.Define("weight","(float)0.5")
+  histo_num = df.Filter(cuts[0]).Histo1D((var_name, 'Numerator', len(bins) -1, array('d',bins)), var_name, 'weight')
   histo_den = df.Filter(cuts[1]).Histo1D((var_name, 'Denominator', len(bins) -1, array('d',bins)), var_name)
 
   histo_num.SetLineColor(3)
@@ -23,11 +26,9 @@ def get_efficiency(df, var_name, bins, cuts, is_mc):
   histo_den.SetLineWidth(2)
   histo_den.SetMarkerSize(1.0)
   histo_den.SetMarkerStyle(20)
-
   sufix= ".png"
   if(is_mc):
     sufix= "_mc.png"
-
 
   histo_num.Draw('e')
   gPad.BuildLegend(0.68,0.795,0.980,0.935,"","f")
@@ -83,7 +84,7 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
   eff_mc.GetPaintedGraph().GetYaxis().SetTitleOffset(1.2)
 
   c1.Update()
-  c1.SaveAs('plots_v1/eff_'+var_name+'.png')
+  c1.SaveAs('plots/eff_'+var_name+'.png')
 
   eff_histo = TH1D(var_name+'_eff_histo', '', len(bins) -1, array('d',bins))
   eff_mc_histo = TH1D(var_name+'_eff_mc_histo', '', len(bins) -1, array('d',bins))
@@ -128,7 +129,7 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
   eff_ratio.GetXaxis().SetLimits(min_x, max_x)
   eff_dummy.GetYaxis().SetRangeUser(0.0, 1.2)
   eff_ratio.Draw('e')
-  c1.SaveAs('plots_v1/eff_ratio_'+var_name+'.png')
+  c1.SaveAs('plots/eff_ratio_'+var_name+'.png')
 
   c2 = ROOT.TCanvas("c2", "",800, 1000)
   upPad = TPad("upPad", "", 0.005,0.25, .995, .995)
@@ -161,7 +162,7 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
   eff_ratio.Draw('e')
   loPad.Update()
   #print(eff_ratio.GetYaxis().GetTitleSize())
-  print(eff_ratio.GetYaxis().GetLabelSize())
+  #print(eff_ratio.GetYaxis().GetLabelSize())
   eff_ratio.GetYaxis().SetLabelSize(0.1)
   eff_ratio.GetYaxis().SetTitleSize(0.13)
   eff_ratio.GetYaxis().SetTitleOffset(0.4)
@@ -177,24 +178,45 @@ def plot_efficiencies(eff, eff_mc, var_name, bins):
   loPad.Modified()
   loPad.Update()
   c2.Update()
-  c2.SaveAs('plots_v1/eff_with_ratio_'+var_name+'.png')
+  c2.SaveAs('plots/eff_with_ratio_'+var_name+'.png')
 
   return 0
 
 
 def main():
-
-  trigger_sel_3Mu = ' && '.join([
+  trigger_sel_3Mu = ' & '.join([
     'mu1_isFromMuT > 0.5',
     'mu2_isFromMuT>0.5', 
     'k_isFromMuT>0.5'
   ])
-  num_selection_3Mu = ' && '.join([
-      preselection,
-      trigger_sel_3Mu
+  #ref_trigger_sel = 'mu1_isDimuon0_jpsi_Trg & mu2_isDimuon0_jpsi_Trg & HLT_Dimuon0_Jpsi_NoVertexing '
+  #ref_trigger_sel = 'mu1_isDimuon0_jpsi_Trg & mu2_isDimuon0_jpsi_Trg '
+  ref_trigger_sel = ' HLT_Dimuon0_Jpsi_NoVertexing > 0.5 '
+
+  preselection_data = ' & '.join([
+    preselection,
+    ref_trigger_sel
+    ])
+  
+  num_selection_3Mu = ' & '.join([
+      trigger_sel_3Mu,
+      preselection_data
       ])
-  #num_selection_3Mu = preselection 
-  cuts_3Mu = [num_selection_3Mu, preselection]
+  
+  cuts_3Mu_data = [num_selection_3Mu, preselection_data]
+  
+
+  ref_trigger_sel_mc = ref_trigger_sel + ' & (abs(mu2_grandmother_pdgId) != 421 | abs(mu1_grandmother_pdgId) != 421)'
+  preselection_mc = ' & '.join([
+    preselection,
+    ref_trigger_sel_mc
+    ])
+  num_selection_3Mu = ' & '.join([
+      trigger_sel_3Mu,
+      preselection_mc
+      ])
+  
+  cuts_3Mu_mc = [num_selection_3Mu, preselection_mc]
   
   bins_pt = [5.0, 5.25, 5.5, 5.75, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 40.0]
   bins_eta = [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4] 
@@ -218,23 +240,26 @@ def main():
       'jpsi_phi': [-3.3, -3.0, -2.7,  -2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4, 2.7, 3.0, 3.3]
       }
 
-  ntuples_dir = "../forCamilla/dataframes_2022Nov07_prepared/"
-  df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_trigger.root")
+  ntuples_dir = "/pnfs/psi.ch/cms/trivcat/store/user/cgalloni/dataframes_2023Feb09/"
+  #df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data_merged_v11.root")
+  df_3Mu = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "data__merged_v11.root")
+
   #df_2MuP = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "data_trigger.root")
   #df_2Mu3P = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
 
-  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
-  #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_3MuFilter_trigger_bcclean.root")
+  #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "HbToJPsiMuMu_merged_v11.root")
+  df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_merged_v11.root")
+
+  #df_3Mu_mc = ROOT.RDataFrame("BTo3Mu", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   #df_2MuP_mc = ROOT.RDataFrame("BTo2MuP", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   #df_2Mu3P_mc = ROOT.RDataFrame("BTo2Mu3P", ntuples_dir + "BcToJPsiMuMu_is_jpsi_mu_trigger.root")
   
   for var_name, bins in binning.items(): 
-    eff = get_efficiency(df_3Mu, var_name, bins, cuts_3Mu, is_mc = False)
-    print("first eff on data for var:", var_name)
-    eff_mc = get_efficiency(df_3Mu_mc, var_name, bins, cuts_3Mu,is_mc = True)
-    print("first eff on mc for var:", var_name)
+    print ("var_name " , var_name)
+    eff = get_efficiency(df_3Mu, var_name, bins, cuts_3Mu_data, is_mc = False)
+    eff_mc = get_efficiency(df_3Mu_mc, var_name, bins, cuts_3Mu_mc,is_mc = True)
     plot_efficiencies(eff, eff_mc, var_name, bins)
-    print("eff plotted:", var_name)
+
 if __name__ == '__main__':
   ROOT.gROOT.SetBatch()
   ROOT.TH1.SetDefaultSumw2()

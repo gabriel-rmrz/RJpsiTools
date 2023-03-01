@@ -19,7 +19,7 @@ print("Number of files: ",lenght)
 for i in range(0, (lenght//chunks_of +1)):
     input_files = "{}".format(list_of_files[i:i+chunks_of]).replace("[","").replace(",","").replace("]","").replace("'","")
     print ( input_files)
-    os.system('hadd -k -j 4 {}/chunk_{}.root {}'.format(inFilePath,i,input_files))
+    os.system('hadd -k -j 10 {}/chunk_{}.root {}'.format(inFilePath,i,input_files))
     i = i+chunks_of
 
-os.system('hadd -k -j 4 %s/file_total.root %s/chunk_*.root'.format(inFilePath,inFilePath))
+os.system('hadd -k -n 50 %s/file_total.root %s/chunk_*.root'.format(inFilePath,inFilePath))
