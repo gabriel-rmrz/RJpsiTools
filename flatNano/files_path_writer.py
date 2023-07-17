@@ -18,12 +18,13 @@ import sys
 
 nanotools = True
 
-tier_access_path = 'srm://storage01.lcg.cscs.ch:8443/srm/managerv2?SFN=/pnfs/lcg.cscs.ch/cms/trivcat/store/user/friti' #CSCS
+tier_access_path = 'srm://storage01.lcg.cscs.ch:8443/srm/managerv2?SFN=/pnfs/lcg.cscs.ch/cms/trivcat/store/user/cgalloni/' #CSCS
+#tier_access_path = 'gsiftp://storage01.lcg.cscs.ch/pnfs/lcg.cscs.ch/cms/trivcat/store/user/cgalloni/'
 #tier_access_path = 'root://t3dcachedb03.psi.ch:1094//pnfs/psi.ch/cms/trivcat/store/user/friti' #PSI
 
-personal_rjpsi_path = '/work/friti/rjpsi/CMSSW_10_6_14/src/PhysicsTools/RJPsiNano/'
-username = 'friti'
-jobs_date = '2021Mar16'
+personal_rjpsi_path = '/work/cgalloni/Rjpsi_analysis/CMSSW_10_6_14/src/PhysicsTools/RJPsiNano/'
+username = 'cgalloni'
+jobs_date = '2023Jan11'
 
 crab_path = personal_rjpsi_path + 'production/RJPsiNANO_'+jobs_date
 
@@ -34,7 +35,7 @@ dataset_dict = {
     'BcToJpsiTauNu':['BcToJpsiTauNu'],
     'OniaX':['OniaX'],
     'BToJpsi_ToMuMu':['BToJpsi_ToMuMu'],
-    'BcToJPsiMuMu':['BcToJPsiMuMu'],
+    'BcToJPsiMuMu':['BcToJPsiMuMu_1','BcToJPsiMuMu_2','BcToJPsiMuMu_3'],
     'HbToJPsiMuMu':['HbToJPsiMuMu'],
     'HbToJPsiMuMu_3MuFilter':['HbToJPsiMuMu_3MuFilter']
                 }
@@ -51,16 +52,18 @@ for dataset in datasets:
     for folder in folders:
         url = os.popen('crab getoutput --xrootd --jobids=1 -d ' + crab_path + '/crab_' + folder + '/').readlines()[0]
         print(crab_path + '/crab_' + folder)
-        print(url)
+        print("url ",url)
         s1 = url.split(username)
-        s2 = s1[1].split('0000')
+        s2 = s1[1].split('/000')
         newurl = tier_access_path + s2[0]
-
+        print("s1: ",s1," s2: ",s2)
         i = 0
-        print('Checking files in the folder '+newurl.strip('\n'))
+        print('Checking files in the folder: '+newurl.strip('\n'))
         while True:
-            files_name = os.popen('eval `scram unsetenv -sh`; gfal-ls '+ newurl.strip('\n')+'000'+str(i)).readlines()
-            path_name = newurl.strip('\n')+'000'+str(i)
+            files_name = os.popen('eval `scram unsetenv -sh`; gfal-ls '+ newurl.strip('\n')+'/000'+str(i)).readlines()
+            #files_name = os.popen('eval `scram unsetenv -sh`; uberftp -ls '+ newurl.strip('\n')+'/000'+str(i)).readlines()
+            path_name = newurl.strip('\n')+'/000'+str(i)
+            print ("path_name: ", path_name)
             if(len(files_name)==0):
                 print("The folder does not exist: "+ str(path_name))
                 break
@@ -68,7 +71,7 @@ for dataset in datasets:
             for file in range(len(files_name)):
                 if(files_name[file].strip('\n') == 'log'):
                         continue
-                #                print('root://cms-xrd-global.cern.ch//store/user/'+username+path_name.split(tier_access_path)[1]+'/'+files_name[file])
+                #print('root://cms-xrd-global.cern.ch//store/user/'+username+path_name.split(tier_access_path)[1]+'/'+files_name[file])
                 f.write('root://cms-xrd-global.cern.ch//store/user/'+username+path_name.split(tier_access_path)[1]+'/'+files_name[file]) 
             i+=1
 

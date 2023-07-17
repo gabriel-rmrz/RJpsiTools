@@ -3,10 +3,11 @@ from personal_settings import *
 
 #data, HbToJPsiMuMu, BcToJPsiMuMu
 
-dataset = 'BcToJPsiMuMu'
-
+#dataset = 'BcToJPsiMuMu'
+dataset = 'data'
 #dataset = 'HbToJPsiMuMu'
-dateFolder = '2021Mar08'
+
+dateFolder = '2023Feb09'
 
 #res = True #already resubmitted?
 res = False

@@ -15,27 +15,30 @@ from personal_settings import *
 
 # nanoaod datasets names and the corresponding files
 dataset_dict = {
-    'data':                  ['--data '+personal_tools_path+'/txt_files/data_files_path.txt'],
-    'BcToJPsiMuMu':          ['--mc_bc '+personal_tools_path+'/txt_files/BcToJPsiMuMu_files_path.txt'],
-    'BcToJpsiTauNu':         ['--mc_tau '+personal_tools_path+'/txt_files/BcToJpsiTauNu_files_path_2021Sep21.txt'],
-    'HbToJPsiMuMu':          ['--mc_hb '+personal_tools_path+'/txt_files/HbToJPsiMuMu_files_path.txt'],
-    'HbToJPsiMuMu_3MuFilter':['--mc_hb '+personal_tools_path+'/txt_files/HbToJPsiMuMu_3MuFilter_files_path_2021Sep21.txt'],
-    'BuToJpsiK':             ['--mc_hb '+personal_tools_path+'/txt_files/BuToJpsiK_files_path_2021Dec08.txt'],
+    'data_dm':                  ['--data '+personal_tools_path+'/txt_files_singleleg/data_DM_files_path.txt'],
+    'data':                  ['--data '+personal_tools_path+'/txt_files_singleleg/data_files_path.txt'],
+    'BcToJPsiMuMu':          ['--mc_bc '+personal_tools_path+'/txt_files_singleleg//BcToJPsiMuMu_files_path.txt'],
+    'BcToJpsiTauNu':         ['--mc_tau '+personal_tools_path+'/txt_files_singleleg/BcToJpsiTauNu_files_path_2021Sep21.txt'],
+    'HbToJPsiMuMu':          ['--mc_hb '+personal_tools_path+'/txt_files_singleleg/HbToJPsiMuMu_files_path.txt'],
+    'HbToJPsiMuMu_3MuFilter':['--mc_hb '+personal_tools_path+'/txt_files_singleleg/HbToJPsiMuMu_3MuFilter_files_path_2021Sep21.txt'],
+    'BuToJpsiK':             ['--mc_hb '+personal_tools_path+'/txt_files_singleleg/BuToJpsiK_files_path_2021Dec08.txt'],
 }
 
+#dataset = 'data_dm'
 #dataset = 'data'
-#dataset='BcToJPsiMuMu'
-dataset='HbToJPsiMuMu'
+dataset='BcToJPsiMuMu'
+#dataset='HbToJPsiMuMu'
 dataset_opt = dataset_dict[dataset][0]
 
 file_name = dataset_opt.split(' ')[1]
 count_files = len(open(file_name).readlines(  ))
 
-files_per_job = 2
+files_per_job = 3
 njobs = count_files//files_per_job + 1  
 
 print("Submitting %s jobs" %(njobs))
-production_tag = datetime.date.today().strftime('%Y%b%d')
+#production_tag = (datetime.date.today()- datetime.timedelta(days = 1)).strftime('%Y%b%d')
+production_tag = datetime.date.today().strftime('%Y%b%d')     
 
 date_dir = 'dataframes_'+ production_tag
 out_dir = date_dir + '/%s' %(dataset)
@@ -99,21 +102,23 @@ if ((("BcToXToJpsi") in dataset) or (("BcToJPsiMuMu") in dataset) ):
 for ijob in range(njobs):
     
     if ((not ("BcToXToJpsi") in dataset) and (not ("BcToJPsiMuMu") in dataset) ):
-        #channels = [['BTo3Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']]
-        channels = [['BTo3Mu']]
+        channels = [['BTo3Mu','BTo2MuP','BTo2Mu3P','BTo2MuK']]
+        #channels = [['BTo2Mu']]
+        #channels = [['BTo3Mu']]
         name_add = ['']
         samples = ['ptmax']
 
     else:
         # in case of Bc sample, for unknown reasons, we need to split the channels because otherwise the jobs fail
-        #channels = [['BTo3Mu'],['BTo2MuP','BTo2MuK','BTo2Mu3P']]
-        channels = [['BTo3Mu']]
+        #channels = [['BTo3Mu'],['BTo2Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']]
+        channels = [['BTo3Mu','BTo2MuP','BTo2MuK','BTo2Mu3P']] 
+        #channels = [['BTo3Mu']]
         name_add = ['_3m','_others']
         samples = bc_samples
         
     for add, channel in zip(name_add,channels):
         #input file
-        fin = open("Resonant_Rjpsi_v11_crab_splitted_channels.py", "rt")
+        fin = open("Resonant_Rjpsi_v16_crab_splitted_channels.py", "rt")
         #output file to write the result to (name of the jobs+ subjob)
         fout = open("%s/Resonant_Rjpsi_chunk%d%s.py" %(out_dir, ijob, add), "wt")
         #for each line in the input file
@@ -168,8 +173,8 @@ for ijob in range(njobs):
             
 
         flauncher.close()
-        #command_sh_batch = 'sbatch -p wn --account=t3 -o %s/logs/chunk%d.log -e %s/errs/chunk%d.err --job-name=%s --time=60 --mem=6GB %s/submitter_chunk%d.sh' %(out_dir, ijob, out_dir, ijob, out_dir, out_dir, ijob)
-        command_sh_batch = 'sbatch -p long --account=t3 --mem=5G -o %s/logs/chunk%d%s.log -e %s/errs/chunk%d%s.err --job-name=%s   %s/submitter_chunk%d%s.sh ' %(out_dir, ijob, add, out_dir, ijob, add, dataset, out_dir, ijob, add)
+        #command_sh_batch = 'sbatch -p long --account=t3 -o %s/logs/chunk%d.log -e %s/errs/chunk%d.err --job-name=%s --time=60 --mem=6GB %s/submitter_chunk%d.sh' %(out_dir, ijob, out_dir, ijob, out_dir, out_dir, ijob)
+        command_sh_batch = 'sbatch -p standard --account=t3 --mem=6G -o %s/logs/chunk%d%s.log -e %s/errs/chunk%d%s.err --job-name=%s   %s/submitter_chunk%d%s.sh ' %(out_dir, ijob, add, out_dir, ijob, add, dataset, out_dir, ijob, add)
         #--mem=6GB
         #print(command_sh_batch)
             

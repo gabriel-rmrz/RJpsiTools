@@ -1,0 +1,2 @@
+root://cms-xrd-global.cern.ch//store/user/cgalloni/crab_job_2023Jan11/Charmonium/crab_data_Run2018D_UL/230111_110828/0000/RJPsi_data_2023Jan11_999.root
+root://cms-xrd-global.cern.ch//store/user/cgalloni/crab_job_2023Jan11/Charmonium/crab_data_Run2018D_UL/230111_110828/0000/RJPsi_data_2023Jan11_998.root
